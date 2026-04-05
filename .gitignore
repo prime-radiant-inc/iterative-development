@@ -1,0 +1,12 @@
+# Sample app collateral — local-only examples used for dogfooding
+sample-app/ghost-pepper-specs/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor state
+*.swp
+*.swo
+.vscode/
+.idea/
