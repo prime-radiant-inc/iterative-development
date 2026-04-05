@@ -119,8 +119,35 @@ def validate_roadmap(content: str) -> list[str]:
 
 
 def validate_iteration_log(content: str) -> list[str]:
-    """Return list of error messages. Empty list means valid. Expanded in Task 5."""
-    return ["iteration-log validator not yet implemented"]
+    """Validate an iteration-log.md file.
+
+    Checks:
+    - Contains at least one ITER-NNNN section
+    - Each iteration section has Completed, Stories delivered, Tasks executed, Summary
+    """
+    import re
+
+    errors: list[str] = []
+
+    iter_pattern = re.compile(r"^## ITER-(\d+)", re.MULTILINE)
+    iters = list(iter_pattern.finditer(content))
+
+    if not iters:
+        errors.append("no iteration sections found (expected at least one '## ITER-NNNN')")
+        return errors
+
+    for idx, match in enumerate(iters):
+        iter_id = f"ITER-{match.group(1)}"
+        start = match.end()
+        end = iters[idx + 1].start() if idx + 1 < len(iters) else len(content)
+        section = content[start:end]
+
+        for required in ("**Completed:**", "**Stories delivered:**",
+                         "**Tasks executed:**", "**Summary:**"):
+            if required not in section:
+                errors.append(f"{iter_id}: missing required field {required}")
+
+    return errors
 
 
 if __name__ == "__main__":

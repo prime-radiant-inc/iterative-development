@@ -101,5 +101,23 @@ class TestRoadmapValidator(unittest.TestCase):
             os.unlink(tmp)
 
 
+class TestIterationLogValidator(unittest.TestCase):
+    def test_valid_example_passes(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "iteration-log",
+             str(FIXTURES / "iteration-log.example.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+    def test_invalid_example_fails(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "iteration-log",
+             str(FIXTURES / "iteration-log.invalid.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+
+
 if __name__ == "__main__":
     unittest.main()
