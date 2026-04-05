@@ -66,5 +66,40 @@ class TestRequirementsIndexValidator(unittest.TestCase):
             os.unlink(tmp)
 
 
+class TestRoadmapValidator(unittest.TestCase):
+    def test_valid_example_passes(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "roadmap",
+             str(FIXTURES / "roadmap.example.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+    def test_invalid_example_fails(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "roadmap",
+             str(FIXTURES / "roadmap.invalid.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+
+    def test_missing_walking_skeleton_is_flagged(self):
+        import tempfile, os
+        content = (FIXTURES / "roadmap.example.md").read_text()
+        broken = content.replace("## Walking skeleton (ITER-0000)", "## Other thing")
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+            f.write(broken)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--type", "roadmap", tmp],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("walking skeleton", result.stderr.lower())
+        finally:
+            os.unlink(tmp)
+
+
 if __name__ == "__main__":
     unittest.main()

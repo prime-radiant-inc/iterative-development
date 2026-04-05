@@ -90,8 +90,32 @@ def validate_requirements_index(content: str) -> list[str]:
 
 
 def validate_roadmap(content: str) -> list[str]:
-    """Return list of error messages. Empty list means valid. Expanded in Task 4."""
-    return ["roadmap validator not yet implemented"]
+    """Validate a roadmap.md file.
+
+    Checks:
+    - Contains a "Walking skeleton (ITER-0000)" section
+    - Walking skeleton section has Intent, Status, Stories committed
+    - Contains an "Iteration list" section
+    """
+    errors: list[str] = []
+
+    if "## Walking skeleton (ITER-0000)" not in content:
+        errors.append("missing walking skeleton section (expected '## Walking skeleton (ITER-0000)')")
+
+    if "## Iteration list" not in content:
+        errors.append("missing iteration list section (expected '## Iteration list')")
+
+    # Walking skeleton required fields
+    if "## Walking skeleton (ITER-0000)" in content:
+        ws_start = content.index("## Walking skeleton (ITER-0000)")
+        next_h2 = content.find("\n## ", ws_start + 1)
+        ws_end = next_h2 if next_h2 != -1 else len(content)
+        ws_section = content[ws_start:ws_end]
+        for required in ("**Intent:**", "**Status:**", "**Stories committed:**"):
+            if required not in ws_section:
+                errors.append(f"walking skeleton: missing required field {required}")
+
+    return errors
 
 
 def validate_iteration_log(content: str) -> list[str]:
