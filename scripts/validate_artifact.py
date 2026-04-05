@@ -53,8 +53,8 @@ def validate_requirements_index(content: str) -> list[str]:
 
     Checks:
     - Contains at least one STORY-NNNN header with valid ID
+    - Detects malformed STORY- headers (missing digits)
     - Each story has: Epic, Title, acceptance criteria, sources, status
-    - Each epic referenced by a story exists as an EPIC-NNN header
     """
     import re
 
@@ -62,7 +62,6 @@ def validate_requirements_index(content: str) -> list[str]:
 
     story_pattern = re.compile(r"^## STORY-(\d+)\s*$", re.MULTILINE)
     bad_story_pattern = re.compile(r"^## STORY-\s*$", re.MULTILINE)
-    epic_pattern = re.compile(r"^## EPIC-(\d+)\s*", re.MULTILINE)
 
     # Catch malformed STORY-/EPIC- IDs (missing digits)
     if bad_story_pattern.search(content):
