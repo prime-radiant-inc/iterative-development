@@ -1,0 +1,16 @@
+{
+  "name": "iterative-development",
+  "description": "An iterative implementation methodology that pairs with superpowers. Extracts requirements from arbitrary-size spec collateral, defines a walking skeleton, then loops through audited sprints until an auditor confirms the product matches the spec. Designed for large or comprehensive specs where the upfront writing-plans → SDD flow loses the plot.",
+  "version": "0.0.1",
+  "author": "iterative-development contributors",
+  "components": {
+    "skills": [
+      "skills/iterative-development",
+      "skills/extracting-requirements",
+      "skills/scoping-the-simplest-core",
+      "skills/running-an-iteration",
+      "skills/implementing-tasks",
+      "skills/auditing-progress"
+    ]
+  }
+}
