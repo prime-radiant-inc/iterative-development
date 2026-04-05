@@ -27,5 +27,44 @@ class TestValidatorScaffold(unittest.TestCase):
         self.assertIn("not found", result.stderr.lower())
 
 
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+class TestRequirementsIndexValidator(unittest.TestCase):
+    def test_valid_example_passes(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "requirements-index",
+             str(FIXTURES / "requirements-index.example.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+    def test_invalid_example_fails(self):
+        result = subprocess.run(
+            ["python3", str(SCRIPT), "--type", "requirements-index",
+             str(FIXTURES / "requirements-index.invalid.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 1)
+
+    def test_missing_story_id_is_flagged(self):
+        # Valid example minus the STORY-0001 id
+        import tempfile, os
+        content = (FIXTURES / "requirements-index.example.md").read_text()
+        broken = content.replace("## STORY-0001", "## STORY-")
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+            f.write(broken)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ["python3", str(SCRIPT), "--type", "requirements-index", tmp],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("story id", result.stderr.lower())
+        finally:
+            os.unlink(tmp)
+
+
 if __name__ == "__main__":
     unittest.main()
