@@ -33,4 +33,11 @@ python3 scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.jso
 echo "OK: aggregate_stories.py runs on sample fixture"
 
 echo ""
+echo "=== Verifying PAR reference documents ==="
+for par_file in skills/shared/*.md; do
+    test -f "$par_file" && echo "OK: $par_file exists" || { echo "FAIL: $par_file missing"; exit 1; }
+done
+test -f skills/auditing-progress/auditor-subagent-prompt.md && echo "OK: auditor-subagent-prompt.md exists" || { echo "FAIL: auditor-subagent-prompt.md missing"; exit 1; }
+
+echo ""
 echo "=== All validation checks passed ==="
