@@ -33,6 +33,11 @@ python3 scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.jso
 echo "OK: aggregate_stories.py runs on sample fixture"
 
 echo ""
+echo "=== Verifying citation checker ==="
+python3 scripts/check_citations.py tests/fixtures/roadmap.example.md tests/fixtures/requirements-index.example.md
+test -f skills/running-an-iteration/scope-reviewer-prompt.md && echo "OK: scope-reviewer-prompt.md exists" || { echo "FAIL: scope-reviewer-prompt.md missing"; exit 1; }
+
+echo ""
 echo "=== Verifying PAR reference documents ==="
 for par_file in skills/shared/*.md; do
     test -f "$par_file" && echo "OK: $par_file exists" || { echo "FAIL: $par_file missing"; exit 1; }
