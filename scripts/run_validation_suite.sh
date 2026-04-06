@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Walking skeleton validation suite.
+# Validation suite for the iterative-development plugin.
 # Runs all unit tests and validators. Fails on first error.
 set -euo pipefail
 
@@ -24,6 +24,13 @@ echo "=== Validating artifact format fixtures ==="
 python3 scripts/validate_artifact.py --type requirements-index tests/fixtures/requirements-index.example.md
 python3 scripts/validate_artifact.py --type roadmap tests/fixtures/roadmap.example.md
 python3 scripts/validate_artifact.py --type iteration-log tests/fixtures/iteration-log.example.md
+
+echo ""
+echo "=== Verifying extraction pipeline scripts ==="
+python3 scripts/chunk_spec.py tests/fixtures/multi-file-spec/ > /dev/null
+echo "OK: chunk_spec.py runs on multi-file-spec fixture"
+python3 scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.json > /dev/null
+echo "OK: aggregate_stories.py runs on sample fixture"
 
 echo ""
 echo "=== All validation checks passed ==="
