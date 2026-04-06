@@ -45,4 +45,10 @@ done
 test -f skills/auditing-progress/auditor-subagent-prompt.md && echo "OK: auditor-subagent-prompt.md exists" || { echo "FAIL: auditor-subagent-prompt.md missing"; exit 1; }
 
 echo ""
+echo "=== Verifying implementing-tasks prompt templates ==="
+for tmpl in skills/implementing-tasks/*-prompt.md; do
+    test -f "$tmpl" && echo "OK: $tmpl exists" || { echo "FAIL: $tmpl missing"; exit 1; }
+done
+
+echo ""
 echo "=== All validation checks passed ==="
