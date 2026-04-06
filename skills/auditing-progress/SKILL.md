@@ -15,15 +15,20 @@ Invoked by `iterative-development` after every `running-an-iteration` call, befo
 
 ## Audit Process
 
-### 1. Identify stories to audit
+### 1. Partition the audit into two tiers
 
-Read `docs/superpowers/iterations/requirements-index.md`. Find all stories marked `done:ITER-<current>` (the just-finished iteration's claimed work).
+Read `docs/superpowers/iterations/requirements-index.md`:
+
+- **Deep tier:** stories marked `done:ITER-<current>` — the ones this iteration just delivered. Audit every AC thoroughly.
+- **Sweep tier:** all other stories previously marked `done:ITER-<earlier>`. Light sanity check — run test suites, spot-check ACs, look for regressions. Not a full re-verification.
 
 ### 2. Dispatch paired auditor subagents (PAR)
 
 Following the PAR methodology in `skills/shared/parallel-adversarial-review.md`:
 
-1. Build the auditor prompt using the template in `auditor-subagent-prompt.md`
+1. Build the auditor prompt using `auditor-subagent-prompt.md`. Include BOTH tiers:
+   - Deep tier: paste full story cards with all ACs for just-done stories
+   - Sweep tier: paste story IDs and test commands for previously-done stories (not full cards)
 2. Wrap it in the competitive framing from `skills/shared/par-reviewer-wrapper.md`
 3. Dispatch TWO auditor subagents in parallel (Agent tool, two calls in one message):
    - "PAR Review A: audit ITER-NNNN" with Reviewer [A]
