@@ -99,5 +99,38 @@ class TestChunkSpec(unittest.TestCase):
             Path(tmp).unlink()
 
 
+    def test_large_section_splits_by_h3(self):
+        """A section over the token threshold should sub-split by ### headings."""
+        # Create a file with one ## section that's too big, containing ### subsections
+        sub_a = "### Sub A\n\n" + ("word " * 1500) + "\n\n"
+        sub_b = "### Sub B\n\n" + ("word " * 1500) + "\n\n"
+        content = "# Big Doc\n\n## Large Section\n\n" + sub_a + sub_b
+
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+            f.write(content)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ["python3", str(SCRIPT), tmp, "--max-tokens", "2000"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            chunks = json.loads(result.stdout)
+            # Should have sub-split: at least 2 chunks from the ### subsections
+            self.assertGreaterEqual(len(chunks), 2)
+            headings = [c["heading"] for c in chunks]
+            # Headings should show parent > child format
+            self.assertTrue(
+                any("Sub A" in h for h in headings if h),
+                f"Expected 'Sub A' in headings, got {headings}",
+            )
+            self.assertTrue(
+                any("Sub B" in h for h in headings if h),
+                f"Expected 'Sub B' in headings, got {headings}",
+            )
+        finally:
+            Path(tmp).unlink()
+
+
 if __name__ == "__main__":
     unittest.main()
