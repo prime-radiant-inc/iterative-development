@@ -7,31 +7,67 @@ description: Use when turning a requirements-index.md into a roadmap — selects
 
 ## Overview
 
-Reads `docs/superpowers/iterations/requirements-index.md` and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus an ordered list of follow-on iterations that each commit to a cohesive subset of stories.
-
-**This is Plan 1 — walking skeleton implementation. Parallel adversarial scope review, boxing-in look-ahead, and formal walking-skeleton selection heuristics are NOT yet implemented and will be added in later plans.**
+Reads `docs/superpowers/iterations/requirements-index.md` and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus ordered follow-on iterations. Runs citation and scope review via PAR before committing the roadmap.
 
 ## When to Use
 
-Invoked by `iterative-development` during bootstrap after `extracting-requirements` has produced the backlog.
+Invoked by `iterative-development` during bootstrap after `extracting-requirements`.
 
-## Walking Skeleton Behavior (Plan 1)
+## Scoping Process
 
-1. Read `docs/superpowers/iterations/requirements-index.md`.
-2. Define the walking-skeleton iteration (ITER-0000):
-   - Select a small cohesive set of stories (for trivial specs in Plan 1, this may be the ENTIRE backlog)
-   - The walking skeleton should prove the end-to-end shape of the product works
-3. Order the remaining stories into follow-on iterations. For Plan 1 dogfood, a trivial spec may have zero follow-on iterations.
-4. Write the result to `docs/superpowers/iterations/roadmap.md` following the format in `tests/fixtures/roadmap.example.md`.
-5. Run `scripts/validate_artifact.py --type roadmap <path>` to verify the output is well-formed.
-6. If validation fails, fix the formatting issues and re-validate.
+### 1. Read the backlog
+
+Read `docs/superpowers/iterations/requirements-index.md` — epic summaries and story titles first, then dip into ACs when selecting.
+
+### 2. Define the walking skeleton (ITER-0000)
+
+Select a small cohesive set of stories from as many distinct epics as possible. The walking skeleton should prove the end-to-end shape of the product works. Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists."
+
+### 3. Order remaining stories into iterations
+
+Each iteration is a sprint's worth of cohesive work. Iteration granularity is judgment-based — no hardcoded story count.
+
+### 4. Run citation check
+
+Run: `python3 scripts/check_citations.py docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+
+Every iteration must cite only valid STORY-IDs from the index.
+
+### 5. Scope review via PAR
+
+Following `skills/shared/parallel-adversarial-review.md`:
+
+1. Build scope reviewer prompts using `skills/running-an-iteration/scope-reviewer-prompt.md`
+2. Wrap in PAR competitive framing
+3. Dispatch paired scope reviewers focused on:
+   - Is ITER-0000 really the thinnest possible walking skeleton?
+   - Could anything be deferred from ITER-0000 to a follow-on?
+   - Does ITER-0000's design box in any follow-on iteration?
+4. If REVISE recommended: adjust and re-review until APPROVE
+
+### 6. Write and validate roadmap
+
+Write the result to `docs/superpowers/iterations/roadmap.md` following the format in `tests/fixtures/roadmap.example.md`.
+
+Run: `python3 scripts/validate_artifact.py --type roadmap docs/superpowers/iterations/roadmap.md`
+
+### 7. Commit
+
+```bash
+git add docs/superpowers/iterations/roadmap.md
+git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
+```
 
 ## Quick Reference
 
-| Input | Output | Validator |
+| Step | Tool/Skill | Purpose |
 |---|---|---|
-| `requirements-index.md` | `roadmap.md` | `scripts/validate_artifact.py --type roadmap` |
+| Citation check | `scripts/check_citations.py` | All cited stories exist |
+| Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in |
+| Validate | `scripts/validate_artifact.py --type roadmap` | Format check |
 
-## Deferred to later plans
+## References
 
-Parallel adversarial scope review, citation integrity check (mechanically), boxing-in look-ahead against next 3 iterations, formal walking-skeleton selection heuristic beyond "cross-cut epics", user-tunable iteration granularity.
+- `skills/shared/parallel-adversarial-review.md` — PAR methodology
+- `skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused)
+- `scripts/check_citations.py` — mechanical citation check
