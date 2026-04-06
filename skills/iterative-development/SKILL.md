@@ -26,7 +26,7 @@ Do NOT use for small, bounded projects — `superpowers:writing-plans → superp
 
 1. Check `docs/superpowers/iterations/` for existing state. If found, skip to **Resume** below.
 2. Invoke `extracting-requirements` on the human-provided spec path.
-   - Chunks the spec via `scripts/chunk_spec.py`, dispatches parallel extraction subagents, aggregates via `scripts/aggregate_stories.py`
+   - Chunks the spec, dispatches parallel extraction subagents, aggregates results
    - Produces `docs/superpowers/iterations/requirements-index.md`
 3. Invoke `scoping-the-simplest-core` on the resulting backlog.
    - Defines the walking skeleton iteration (ITER-0000) + ordered follow-on iterations

@@ -13,6 +13,16 @@ Reads `docs/superpowers/iterations/requirements-index.md` and produces `docs/sup
 
 Invoked by `iterative-development` during bootstrap after `extracting-requirements`.
 
+## Script Location
+
+All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
+
+```bash
+SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
+```
+
+Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+
 ## Scoping Process
 
 ### 1. Read the backlog
@@ -29,7 +39,7 @@ Each iteration is a sprint's worth of cohesive work. Iteration granularity is ju
 
 ### 4. Run citation check
 
-Run: `python3 scripts/check_citations.py docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Run: `python3 "$SCRIPTS_DIR/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
 
 Every iteration must cite only valid STORY-IDs from the index.
 
@@ -49,7 +59,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 Write the result to `docs/superpowers/iterations/roadmap.md` following the format in `tests/fixtures/roadmap.example.md`.
 
-Run: `python3 scripts/validate_artifact.py --type roadmap docs/superpowers/iterations/roadmap.md`
+Run: `python3 "$SCRIPTS_DIR/validate_artifact.py" --type roadmap docs/superpowers/iterations/roadmap.md`
 
 ### 7. Commit
 
@@ -62,12 +72,12 @@ git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `scripts/check_citations.py` | All cited stories exist |
+| Citation check | `$SCRIPTS_DIR/check_citations.py` | All cited stories exist |
 | Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in |
-| Validate | `scripts/validate_artifact.py --type roadmap` | Format check |
+| Validate | `$SCRIPTS_DIR/validate_artifact.py --type roadmap` | Format check |
 
 ## References
 
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
 - `skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused)
-- `scripts/check_citations.py` — mechanical citation check
+- `$SCRIPTS_DIR/check_citations.py` — mechanical citation check
