@@ -1,0 +1,72 @@
+[
+  {
+    "title": "User creates a new task",
+    "epic_theme": "Task Management",
+    "as_a": "command-line user",
+    "i_want": "to run task add <title> to create a task",
+    "so_that": "the task is tracked with a unique ID and pending status",
+    "acceptance_criteria": [
+      "AC-1: Running `task add Buy groceries` prints `Created task #1: Buy groceries` to stdout and exits 0",
+      "AC-2: Running `task add` with no title prints `usage: task add <title>` to stderr and exits 1"
+    ],
+    "sources": [
+      {"file": "domain-users.md", "lines": "3-12"}
+    ]
+  },
+  {
+    "title": "User lists all tasks",
+    "epic_theme": "Task Management",
+    "as_a": "command-line user",
+    "i_want": "to run task list to see all tasks",
+    "so_that": "I can see what needs to be done",
+    "acceptance_criteria": [
+      "AC-1: Running `task list` with tasks shows a table with ID, Status, Title columns",
+      "AC-2: Running `task list` with no tasks prints `No tasks.` and exits 0"
+    ],
+    "sources": [
+      {"file": "domain-users.md", "lines": "14-23"}
+    ]
+  },
+  {
+    "title": "User completes a task",
+    "epic_theme": "Task Management",
+    "as_a": "command-line user",
+    "i_want": "to run task done <id> to mark a task as completed",
+    "so_that": "I can track my progress",
+    "acceptance_criteria": [
+      "AC-1: Running `task done 1` marks task #1 as done and prints confirmation",
+      "AC-2: Running `task done 999` for a non-existent ID prints error to stderr and exits 1"
+    ],
+    "sources": [
+      {"file": "domain-users.md", "lines": "25-31"}
+    ]
+  },
+  {
+    "title": "Usage tracking increments on task creation",
+    "epic_theme": "Billing",
+    "as_a": "system",
+    "i_want": "the monthly task counter to increment when a task is created",
+    "so_that": "usage can be tracked for quota enforcement",
+    "acceptance_criteria": [
+      "AC-1: Creating a task increments the counter in usage.json",
+      "AC-2: The counter resets on the first of each month"
+    ],
+    "sources": [
+      {"file": "domain-billing.md", "lines": "3-7"}
+    ]
+  },
+  {
+    "title": "Quota enforcement blocks task creation over limit",
+    "epic_theme": "Billing",
+    "as_a": "system",
+    "i_want": "task add to fail when the monthly quota is exceeded",
+    "so_that": "usage limits are enforced",
+    "acceptance_criteria": [
+      "AC-1: With 100+ tasks this month, `task add` prints quota error to stderr and exits 1",
+      "AC-2: No task is created when quota is exceeded"
+    ],
+    "sources": [
+      {"file": "domain-billing.md", "lines": "9-13"}
+    ]
+  }
+]
