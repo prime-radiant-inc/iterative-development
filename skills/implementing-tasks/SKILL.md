@@ -7,41 +7,95 @@ description: Use when executing a batch of TDD-sized tasks inside a running-an-i
 
 ## Overview
 
-Takes an in-memory batch of TDD-sized tasks and executes each through an implementer subagent following red-green-refactor discipline. This is a fork of `superpowers:subagent-driven-development` with the plan-file reading phase stripped and the final end-of-plan reviewer removed.
-
-**This is Plan 1 — walking skeleton implementation. The two-stage review (spec compliance + code quality), review re-dispatch loop, boxing-in check, parallel adversarial review wrappers, and model selection rules are NOT yet implemented and will be added in later plans.**
+Takes an in-memory batch of TDD-sized tasks and executes each through: implementer subagent (TDD) → PAR spec-compliance review → fix loop → PAR code-quality review with boxing-in check → fix loop → mark complete. This is a fork of `superpowers:subagent-driven-development` with the plan-file reading phase stripped and the final end-of-plan reviewer removed.
 
 ## When to Use
 
-Invoked by `running-an-iteration` with a list of tasks. Each task is a complete TDD cycle (failing test → implementation → passing test → commit). Tasks are passed in memory, not via a file.
+Invoked by `running-an-iteration` with a list of tasks. Tasks are passed in memory, not via a file.
 
-## Walking Skeleton Behavior (Plan 1)
+## Per-Task Cycle
 
 For each task in the provided list:
 
-1. Dispatch an implementer subagent with:
-   - The task description and context (the story card(s) the task contributes to)
-   - Instructions to follow TDD red-green-refactor (`superpowers:test-driven-development`)
-   - Instructions to commit the work when tests pass
-   - Instructions to report back with status DONE / DONE_WITH_CONCERNS / BLOCKED / NEEDS_CONTEXT
+### 1. Dispatch implementer
 
-2. Wait for the subagent to complete. Do not run tasks in parallel.
+Using the template in `implementer-subagent-prompt.md`, dispatch a single implementer subagent with the full task description and context.
 
-3. Handle the returned status:
-   - DONE: record the task as complete, move to the next
-   - DONE_WITH_CONCERNS: record the concerns, move to the next (Plan 1 does not block on concerns)
-   - BLOCKED or NEEDS_CONTEXT: return control to the caller with the blocker details. The caller decides whether to provide more context and re-dispatch, or escalate
+### 2. Handle implementer status
 
-4. After all tasks complete, return a per-task result list to the caller.
+- **DONE:** proceed to spec-compliance review (step 3)
+- **DONE_WITH_CONCERNS:** read the concerns. If about correctness/scope, address before review. If observations, note and proceed.
+- **NEEDS_CONTEXT:** provide the missing context and re-dispatch
+- **BLOCKED:** assess: context problem → re-dispatch with context; too hard → re-dispatch with more capable model; task too large → break into smaller pieces; plan wrong → escalate to caller
 
-**No review dispatch in Plan 1.** The implementer's self-review is the only quality gate at this point. Two-stage review and PAR wrappers come in later plans.
+### 3. PAR spec-compliance review (Stage 1)
+
+Following `skills/shared/parallel-adversarial-review.md`:
+
+1. Build spec-compliance prompt using `spec-compliance-reviewer-prompt.md`
+2. Wrap in PAR competitive framing from `skills/shared/par-reviewer-wrapper.md`
+3. Dispatch TWO spec-compliance reviewers in parallel
+4. Aggregate findings (PAR rules: union of findings, severity = take worst)
+5. If ❌ issues found:
+   - Send aggregated issues back to the implementer subagent (same subagent, via SendMessage)
+   - Implementer fixes
+   - Re-dispatch fresh PAR spec-compliance pair
+   - Repeat until ✅ spec compliant
+6. Only proceed to Stage 2 after Stage 1 is ✅
+
+### 4. PAR code-quality review (Stage 2)
+
+Following `skills/shared/parallel-adversarial-review.md`:
+
+1. Build code-quality prompt using `code-quality-reviewer-prompt.md`
+   - Include the next 3 pending roadmap iterations for the boxing-in check
+2. Wrap in PAR competitive framing
+3. Dispatch TWO code-quality reviewers in parallel
+4. Aggregate findings
+5. If ❌ changes needed:
+   - Send aggregated issues back to the implementer
+   - Implementer fixes
+   - Re-dispatch fresh PAR code-quality pair
+   - Repeat until ✅ approved
+
+### 5. Mark task complete
+
+Record the task as done. Move to the next task.
+
+After all tasks complete, return a per-task result list to the caller.
+
+## Model Selection
+
+Use the least powerful model that can handle each role:
+
+| Role | Signal → Model |
+|---|---|
+| Implementer (mechanical: 1-2 files, clear spec) | Cheap/fast model |
+| Implementer (integration: multi-file, judgment) | Standard model |
+| Spec-compliance reviewer | Standard model |
+| Code-quality reviewer | Most capable model |
 
 ## Quick Reference
 
-| Input | Output | Sub-dispatches |
-|---|---|---|
-| Task list (in memory) + iteration context | Per-task result list | Implementer subagents (one per task, sequential) |
+| Per task | Subagents dispatched |
+|---|---|
+| Implementer | 1 (sequential, TDD) |
+| Spec-compliance review (PAR) | 2 in parallel |
+| Code-quality review (PAR) | 2 in parallel |
+| **Minimum per task** | **5** (before re-review loops) |
 
-## Deferred to later plans
+## Red Flags
 
-Spec-compliance reviewer dispatch, code-quality reviewer dispatch, parallel adversarial review (2 reviewers per stage), boxing-in check, re-dispatch loop on review failures, model selection rules.
+- **Never** start code-quality review before spec compliance is ✅
+- **Never** skip the re-review after fixes (reviewer found issues = implementer fixes = review again)
+- **Never** dispatch multiple implementers in parallel (conflicts)
+- **Never** accept "close enough" on spec compliance
+- **Never** let implementer self-review replace the two-stage review
+
+## References
+
+- `implementer-subagent-prompt.md` — implementer dispatch template
+- `spec-compliance-reviewer-prompt.md` — Stage 1 review template
+- `code-quality-reviewer-prompt.md` — Stage 2 review template (includes boxing-in)
+- `skills/shared/parallel-adversarial-review.md` — PAR methodology
+- `skills/shared/par-reviewer-wrapper.md` — competitive framing wrapper
