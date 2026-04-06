@@ -7,36 +7,61 @@ description: Use when an iteration has just finished and you need to verify the 
 
 ## Overview
 
-Runs after every iteration. Deep-checks the just-finished iteration's work (every AC verified by running tests + reading code) and lightly sanity-sweeps the whole product for regressions. Returns gaps (ACs not actually met) and unrequested features (code that doesn't map to any story).
-
-**This is Plan 1 — walking skeleton implementation. Parallel adversarial auditor pairs, two-tier partitioning (deep + sweep), per-epic auditor dispatch, and sophisticated unrequested-feature scanning are NOT yet implemented and will be added in later plans.**
+Runs after every iteration as part of the planning cycle. Verifies the just-finished iteration's work against story acceptance criteria and checks the whole product for regressions. Uses **parallel adversarial review (PAR)** — two paired auditor subagents evaluate the same work in parallel with competitive framing.
 
 ## When to Use
 
 Invoked by `iterative-development` after every `running-an-iteration` call, before picking the next iteration.
 
-## Walking Skeleton Behavior (Plan 1)
+## Audit Process
 
-1. Read `docs/superpowers/iterations/requirements-index.md`.
-2. Identify the stories that were marked `done:ITER-<current>` in the just-finished iteration.
-3. Dispatch a single auditor subagent (no parallel pairs, no partitioning) with:
-   - The list of just-done stories and their acceptance criteria
-   - The current product state (file paths, test command)
-   - Instructions to: run the tests for each AC, verify the AC is actually met, flag any that are not
-4. The auditor returns a gap list:
-   - For each just-done story, which ACs pass and which fail
-5. For Plan 1 walking skeleton: **no sweep tier**. Only the just-done stories are audited. Regression detection across earlier work is deferred to Plan 4.
-6. Aggregate the auditor's report:
-   - If any ACs fail: append gap stories to `requirements-index.md` (status `pending`) and revise `roadmap.md` to add a follow-up iteration
-   - If all ACs pass: the iteration is confirmed done, proceed to the next iteration
-7. Return the audit result to the orchestrator.
+### 1. Identify stories to audit
+
+Read `docs/superpowers/iterations/requirements-index.md`. Find all stories marked `done:ITER-<current>` (the just-finished iteration's claimed work).
+
+### 2. Dispatch paired auditor subagents (PAR)
+
+Following the PAR methodology in `skills/shared/parallel-adversarial-review.md`:
+
+1. Build the auditor prompt using the template in `auditor-subagent-prompt.md`
+2. Wrap it in the competitive framing from `skills/shared/par-reviewer-wrapper.md`
+3. Dispatch TWO auditor subagents in parallel (Agent tool, two calls in one message):
+   - "PAR Review A: audit ITER-NNNN" with Reviewer [A]
+   - "PAR Review B: audit ITER-NNNN" with Reviewer [B]
+4. Wait for both to return
+
+### 3. Aggregate findings
+
+Following PAR aggregation rules:
+- Same finding from both auditors → one finding, high confidence
+- Finding from only one auditor → separate finding, still actionable
+- Severity disagreement → take the more severe assessment, always fix it
+
+### 4. Process results
+
+- **If gaps found** (any AC fails in the aggregated report):
+  - Append gap stories to `requirements-index.md` (status `pending`) or flip existing stories back from `done` to `pending`
+  - Revise `roadmap.md` to add a follow-up iteration for the gaps
+- **If clean** (all ACs pass, no unrequested features):
+  - The iteration is confirmed done
+  - Return clean signal to the orchestrator
+
+### 5. Return control
+
+Return the audit result (clean or gaps) to the orchestrator. The orchestrator decides whether to loop or terminate.
 
 ## Quick Reference
 
 | Reads | Writes | Dispatches |
 |---|---|---|
-| `requirements-index.md`, product code/tests | `requirements-index.md` (gap stories), `roadmap.md` (new iteration) if gaps | Auditor subagent (one, non-paired) |
+| `requirements-index.md`, product code/tests | `requirements-index.md` (gaps), `roadmap.md` (new iteration) if gaps | **Two** auditor subagents in parallel (PAR) |
+
+## References
+
+- `skills/shared/parallel-adversarial-review.md` — PAR methodology
+- `skills/shared/par-reviewer-wrapper.md` — competitive framing wrapper
+- `auditor-subagent-prompt.md` — auditor-specific prompt template
 
 ## Deferred to later plans
 
-Parallel adversarial auditor pairs, two-tier scope (deep new work + light whole-product sweep), per-epic partitioning for large backlogs, unrequested-feature scanning across iteration diffs, formal aggregation rules for disagreeing auditor findings.
+Two-tier scope (deep new work + light whole-product sweep), per-epic partitioning for large backlogs, unrequested-feature scanning across iteration diffs.
