@@ -100,6 +100,101 @@ class TestAggregateStories(unittest.TestCase):
         story_ids = re.findall(r"## STORY-(\d+)", result.stdout)
         self.assertEqual(story_ids, ["0001", "0002", "0003", "0004", "0005"])
 
+    def test_child_themes_merge_into_parent(self):
+        """'Parent - Child' epic themes should merge into the parent epic."""
+        stories = [
+            {
+                "title": "Pipeline starts",
+                "epic_theme": "Recording Pipeline",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: starts"],
+                "sources": [{"file": "a.md", "lines": "1-5"}]
+            },
+            {
+                "title": "Pipeline state machine",
+                "epic_theme": "Recording Pipeline - State Machine",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: state"],
+                "sources": [{"file": "b.md", "lines": "1-5"}]
+            },
+            {
+                "title": "Pipeline concurrency",
+                "epic_theme": "Recording Pipeline - Concurrency",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: concurrency"],
+                "sources": [{"file": "c.md", "lines": "1-5"}]
+            },
+            {
+                "title": "Unrelated feature",
+                "epic_theme": "CLI",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: cli"],
+                "sources": [{"file": "d.md", "lines": "1-5"}]
+            },
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(stories, f)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ["python3", str(SCRIPT), tmp],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            output = result.stdout
+            import re
+            epic_headers = re.findall(r"## (EPIC-\d+) — (.+)", output)
+            theme_names = [name for _, name in epic_headers]
+            # Should have 2 epics: "Recording Pipeline" and "CLI"
+            # NOT 4 epics with separate "Recording Pipeline - State Machine" etc.
+            self.assertEqual(len(epic_headers), 2, f"Expected 2 epics, got: {theme_names}")
+            self.assertIn("Recording Pipeline", theme_names)
+            self.assertIn("CLI", theme_names)
+            # All 3 recording stories should be under the same epic
+            recording_epic = [eid for eid, name in epic_headers if name == "Recording Pipeline"][0]
+            story_epic_refs = re.findall(rf"\*\*Epic:\*\* {recording_epic}", output)
+            self.assertEqual(len(story_epic_refs), 3,
+                             f"Expected 3 stories under {recording_epic}")
+        finally:
+            Path(tmp).unlink()
+
+    def test_orphan_child_themes_create_parent(self):
+        """'Parent - Child' themes with no standalone parent should still merge."""
+        stories = [
+            {
+                "title": "Persist prefs",
+                "epic_theme": "Data Persistence - Preferences",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: prefs"],
+                "sources": [{"file": "a.md", "lines": "1-5"}]
+            },
+            {
+                "title": "Persist audio",
+                "epic_theme": "Data Persistence - Audio",
+                "as_a": "user", "i_want": "x", "so_that": "y",
+                "acceptance_criteria": ["AC-1: audio"],
+                "sources": [{"file": "b.md", "lines": "1-5"}]
+            },
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(stories, f)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ["python3", str(SCRIPT), tmp],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            output = result.stdout
+            import re
+            epic_headers = re.findall(r"## (EPIC-\d+) — (.+)", output)
+            theme_names = [name for _, name in epic_headers]
+            # Should create one "Data Persistence" parent epic
+            self.assertEqual(len(epic_headers), 1, f"Expected 1 epic, got: {theme_names}")
+            self.assertIn("Data Persistence", theme_names)
+        finally:
+            Path(tmp).unlink()
+
     def test_no_input_returns_error(self):
         result = subprocess.run(
             ["python3", str(SCRIPT)],

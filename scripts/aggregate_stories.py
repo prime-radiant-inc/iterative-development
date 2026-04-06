@@ -54,6 +54,61 @@ def group_into_epics(stories: list[dict]) -> dict[str, list[dict]]:
     return epics
 
 
+def merge_child_themes(epics: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    """Merge 'Parent - Child' epic themes into their parent.
+
+    If 'Parent' exists as a standalone theme, children merge into it.
+    If only children exist (e.g. 'X - A', 'X - B'), creates 'X' as parent.
+    """
+    separator = " - "
+    # Find all parent names from child themes
+    children_by_parent: dict[str, list[str]] = {}
+    for theme in epics:
+        if separator in theme:
+            parent = theme.split(separator, 1)[0].strip()
+            children_by_parent.setdefault(parent, []).append(theme)
+
+    if not children_by_parent:
+        return epics
+
+    merged: dict[str, list[dict]] = OrderedDict()
+    consumed: set[str] = set()
+
+    for theme, stories in epics.items():
+        if theme in consumed:
+            continue
+
+        # Check if this theme is a parent with children
+        if theme in children_by_parent:
+            # Standalone parent — absorb all children
+            combined = list(stories)
+            for child in children_by_parent[theme]:
+                if child in epics:
+                    combined.extend(epics[child])
+                    consumed.add(child)
+            merged[theme] = combined
+        elif separator in theme:
+            parent = theme.split(separator, 1)[0].strip()
+            if parent not in epics and parent not in merged:
+                # Orphan children — create parent from all siblings
+                combined = list(stories)
+                for sibling in children_by_parent.get(parent, []):
+                    if sibling != theme and sibling in epics:
+                        combined.extend(epics[sibling])
+                        consumed.add(sibling)
+                merged[parent] = combined
+            elif parent in merged:
+                # Already merged into parent by a sibling
+                merged[parent].extend(stories)
+            else:
+                # Parent exists as standalone, will be handled when we reach it
+                continue
+        else:
+            merged[theme] = stories
+
+    return merged
+
+
 def format_requirements_index(epics: dict[str, list[dict]]) -> str:
     """Format epics and stories as requirements-index.md content."""
     lines: list[str] = ["# Requirements Index", ""]
@@ -147,6 +202,7 @@ def main() -> int:
 
     deduped = dedup_stories(stories)
     epics = group_into_epics(deduped)
+    epics = merge_child_themes(epics)
     output = format_requirements_index(epics)
     print(output)
     return 0
