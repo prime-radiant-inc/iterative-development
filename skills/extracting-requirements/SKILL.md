@@ -62,7 +62,25 @@ The script:
 - Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
 - Outputs formatted `requirements-index.md`
 
-### 4. Validate
+### 4. Consolidate epics
+
+The aggregation script groups by exact `epic_theme` string. Since extraction subagents work independently, they often name the same domain differently — producing duplicate or near-duplicate epics.
+
+After aggregation, review the epic list and consolidate:
+
+1. Extract the epic names: `grep "^## EPIC-" docs/superpowers/iterations/requirements-index.md`
+2. Identify groups that should merge:
+   - "Parent - Child" variants (e.g., "Recording Pipeline - State Machine" → "Recording Pipeline")
+   - Near-synonyms (e.g., "Audio Capture" + "Audio Capture and Encoding" + "Audio Recording")
+   - Same domain from different spec angles (e.g., "Privacy Permissions" + "Permissions")
+   - Keep epics separate when they represent genuinely different concerns
+3. For each merge: update the `epic_theme` in the extracted JSON files to use the canonical name
+4. Re-run the aggregation script to produce the consolidated index
+5. Verify the epic count is reasonable (roughly 20-40 for a large project, fewer for smaller ones)
+
+**Do NOT merge epics that are legitimately different.** "Keyboard Input" (raw event handling) and "Keyboard Shortcuts" (user-configurable bindings) are separate concerns even though both say "Keyboard." Use domain judgment.
+
+### 5. Validate
 
 ```bash
 python3 "$SCRIPTS_DIR/validate_artifact.py" --type requirements-index docs/superpowers/iterations/requirements-index.md
@@ -70,7 +88,7 @@ python3 "$SCRIPTS_DIR/validate_artifact.py" --type requirements-index docs/super
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 
-### 5. Commit
+### 6. Commit
 
 ```bash
 git add docs/superpowers/iterations/requirements-index.md
@@ -84,6 +102,7 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 | Chunk | `$SCRIPTS_DIR/chunk_spec.py` | spec path | JSON chunks (stdout) |
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
 | Aggregate | `$SCRIPTS_DIR/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
+| Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
 | Validate | `$SCRIPTS_DIR/validate_artifact.py --type requirements-index` | .md file | OK or errors |
 
 ## Deferred to later plans
