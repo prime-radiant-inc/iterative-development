@@ -41,9 +41,9 @@ Expected high-level flow:
 Check that the following files exist and validate:
 
 ```bash
-python3 <plugin-repo>/scripts/validate_artifact.py --type requirements-index docs/superpowers/iterations/requirements-index.md
-python3 <plugin-repo>/scripts/validate_artifact.py --type roadmap docs/superpowers/iterations/roadmap.md
-python3 <plugin-repo>/scripts/validate_artifact.py --type iteration-log docs/superpowers/iterations/iteration-log.md
+python3 <plugin-repo>/skills/extracting-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements-index.md
+python3 <plugin-repo>/skills/scoping-the-simplest-core/scripts/validate_roadmap.py docs/superpowers/iterations/roadmap.md
+python3 <plugin-repo>/skills/running-an-iteration/scripts/validate_iteration_log.py docs/superpowers/iterations/iteration-log.md
 ```
 
 Expected: all three print `OK: <path>`.

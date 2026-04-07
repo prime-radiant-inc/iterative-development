@@ -15,13 +15,7 @@ Invoked by `iterative-development` during bootstrap after `extracting-requiremen
 
 ## Script Location
 
-All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
-
-```bash
-SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
-```
-
-Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
 
 ## Scoping Process
 
@@ -39,7 +33,7 @@ Each iteration is a sprint's worth of cohesive work. Iteration granularity is ju
 
 ### 4. Run citation check
 
-Run: `python3 "$SCRIPTS_DIR/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Run: `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
 
 Every iteration must cite only valid STORY-IDs from the index.
 
@@ -59,7 +53,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 Write the result to `docs/superpowers/iterations/roadmap.md` following the format in `tests/fixtures/roadmap.example.md`.
 
-Run: `python3 "$SCRIPTS_DIR/validate_artifact.py" --type roadmap docs/superpowers/iterations/roadmap.md`
+Run: `python3 "scripts/validate_roadmap.py" docs/superpowers/iterations/roadmap.md`
 
 ### 7. Commit
 
@@ -72,12 +66,12 @@ git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `$SCRIPTS_DIR/check_citations.py` | All cited stories exist |
+| Citation check | `scripts/check_citations.py` | All cited stories exist |
 | Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in |
-| Validate | `$SCRIPTS_DIR/validate_artifact.py --type roadmap` | Format check |
+| Validate | `scripts/validate_roadmap.py` | Format check |
 
 ## References
 
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
 - `skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused)
-- `$SCRIPTS_DIR/check_citations.py` — mechanical citation check
+- `scripts/check_citations.py` — mechanical citation check

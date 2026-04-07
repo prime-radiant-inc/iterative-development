@@ -15,13 +15,7 @@ Invoked by `iterative-development` inside the main loop. Each invocation runs ex
 
 ## Script Location
 
-All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
-
-```bash
-SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
-```
-
-Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
 
 ## Iteration Process
 
@@ -35,7 +29,7 @@ Read `docs/superpowers/iterations/requirements-index.md`, load the full story ca
 
 ### 3. Mechanical citation check
 
-Run: `python3 "$SCRIPTS_DIR/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Run: `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
 
 If citations fail, stop and fix the roadmap before proceeding.
 
@@ -63,20 +57,20 @@ Pass the task list and iteration context to `implementing-tasks`. Wait for compl
 - Mark stories `done:ITER-NNNN` in `requirements-index.md`
 - Update iteration status in `roadmap.md` to `done`
 - Append entry to `docs/superpowers/iterations/iteration-log.md`
-- Validate: `python3 "$SCRIPTS_DIR/validate_artifact.py" --type iteration-log docs/superpowers/iterations/iteration-log.md`
+- Validate: `python3 "scripts/validate_iteration_log.py" docs/superpowers/iterations/iteration-log.md`
 - Return control to orchestrator (do NOT invoke `auditing-progress` — that's the orchestrator's job)
 
 ## Quick Reference
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `$SCRIPTS_DIR/check_citations.py` | Mechanical: cited stories exist |
+| Citation check | `scripts/check_citations.py` | Mechanical: cited stories exist |
 | Scope review | PAR + `scope-reviewer-prompt.md` | Semantic: scope creep, boxing-in |
 | Task execution | `implementing-tasks` | TDD implementation |
-| Wrap up | `$SCRIPTS_DIR/validate_artifact.py` | Artifact validation |
+| Wrap up | `scripts/validate_iteration_log.py` | Artifact validation |
 
 ## References
 
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
 - `scope-reviewer-prompt.md` — scope reviewer prompt template
-- `$SCRIPTS_DIR/check_citations.py` — mechanical citation check
+- `scripts/check_citations.py` — mechanical citation check

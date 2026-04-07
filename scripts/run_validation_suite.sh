@@ -21,20 +21,20 @@ done
 
 echo ""
 echo "=== Validating artifact format fixtures ==="
-python3 scripts/validate_artifact.py --type requirements-index tests/fixtures/requirements-index.example.md
-python3 scripts/validate_artifact.py --type roadmap tests/fixtures/roadmap.example.md
-python3 scripts/validate_artifact.py --type iteration-log tests/fixtures/iteration-log.example.md
+python3 skills/extracting-requirements/scripts/validate_requirements_index.py tests/fixtures/requirements-index.example.md
+python3 skills/scoping-the-simplest-core/scripts/validate_roadmap.py tests/fixtures/roadmap.example.md
+python3 skills/running-an-iteration/scripts/validate_iteration_log.py tests/fixtures/iteration-log.example.md
 
 echo ""
 echo "=== Verifying extraction pipeline scripts ==="
-python3 scripts/chunk_spec.py tests/fixtures/multi-file-spec/ > /dev/null
+python3 skills/extracting-requirements/scripts/chunk_spec.py tests/fixtures/multi-file-spec/ > /dev/null
 echo "OK: chunk_spec.py runs on multi-file-spec fixture"
-python3 scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.json > /dev/null
+python3 skills/extracting-requirements/scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.json > /dev/null
 echo "OK: aggregate_stories.py runs on sample fixture"
 
 echo ""
 echo "=== Verifying citation checker ==="
-python3 scripts/check_citations.py tests/fixtures/roadmap.example.md tests/fixtures/requirements-index.example.md
+python3 skills/scoping-the-simplest-core/scripts/check_citations.py tests/fixtures/roadmap.example.md tests/fixtures/requirements-index.example.md
 test -f skills/running-an-iteration/scope-reviewer-prompt.md && echo "OK: scope-reviewer-prompt.md exists" || { echo "FAIL: scope-reviewer-prompt.md missing"; exit 1; }
 
 echo ""

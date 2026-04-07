@@ -17,13 +17,7 @@ Invoked by `iterative-development` during bootstrap, or standalone when you need
 
 ## Script Location
 
-All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
-
-```bash
-SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
-```
-
-Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
 
 ## Pipeline
 
@@ -32,7 +26,7 @@ Replace `<this-skill's-base-directory>` with the actual base directory shown whe
 Enumerate the spec files without reading full contents:
 
 ```bash
-python3 "$SCRIPTS_DIR/chunk_spec.py" <spec-path>
+python3 "scripts/chunk_spec.py" <spec-path>
 ```
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
@@ -52,7 +46,7 @@ For each chunk (or batch of small chunks), dispatch an extraction subagent using
 Run the aggregation script on all extracted story JSONs:
 
 ```bash
-python3 "$SCRIPTS_DIR/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
+python3 "scripts/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
 ```
 
 The script:
@@ -83,7 +77,7 @@ After aggregation, review the epic list and consolidate:
 ### 5. Validate
 
 ```bash
-python3 "$SCRIPTS_DIR/validate_artifact.py" --type requirements-index docs/superpowers/iterations/requirements-index.md
+python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements-index.md
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
@@ -99,11 +93,11 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 
 | Step | Tool | Input | Output |
 |---|---|---|---|
-| Chunk | `$SCRIPTS_DIR/chunk_spec.py` | spec path | JSON chunks (stdout) |
+| Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
-| Aggregate | `$SCRIPTS_DIR/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
+| Aggregate | `scripts/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
 | Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
-| Validate | `$SCRIPTS_DIR/validate_artifact.py --type requirements-index` | .md file | OK or errors |
+| Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |
 
 ## Deferred to later plans
 

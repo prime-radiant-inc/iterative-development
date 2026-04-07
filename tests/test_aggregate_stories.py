@@ -1,13 +1,13 @@
-"""Unit tests for scripts/aggregate_stories.py."""
+"""Unit tests for extracting-requirements/scripts/aggregate_stories.py."""
 import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent.parent / "scripts" / "aggregate_stories.py"
+SCRIPT = Path(__file__).parent.parent / "skills" / "extracting-requirements" / "scripts" / "aggregate_stories.py"
 FIXTURES = Path(__file__).parent / "fixtures"
-VALIDATOR = Path(__file__).parent.parent / "scripts" / "validate_artifact.py"
+VALIDATOR = Path(__file__).parent.parent / "skills" / "extracting-requirements" / "scripts" / "validate_requirements_index.py"
 
 
 class TestAggregateStories(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestAggregateStories(unittest.TestCase):
             tmp = f.name
         try:
             val_result = subprocess.run(
-                ["python3", str(VALIDATOR), "--type", "requirements-index", tmp],
+                ["python3", str(VALIDATOR), tmp],
                 capture_output=True, text=True,
             )
             self.assertEqual(val_result.returncode, 0,
