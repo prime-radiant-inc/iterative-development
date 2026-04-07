@@ -13,7 +13,7 @@ class TestSkillValidator(unittest.TestCase):
 
     def test_valid_skill_passes(self):
         result = subprocess.run(
-            ["python3", str(SCRIPT), str(FIXTURES / "skill.valid" / "SKILL.md")],
+            ["python3", str(SCRIPT), str(FIXTURES / "skill.valid" / "SKILL-FIXTURE.md")],
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -21,7 +21,7 @@ class TestSkillValidator(unittest.TestCase):
     def test_missing_frontmatter_fails(self):
         result = subprocess.run(
             ["python3", str(SCRIPT),
-             str(FIXTURES / "skill.invalid-no-frontmatter" / "SKILL.md")],
+             str(FIXTURES / "skill.invalid-no-frontmatter" / "SKILL-FIXTURE.md")],
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 1)
@@ -30,7 +30,7 @@ class TestSkillValidator(unittest.TestCase):
     def test_bad_description_format_fails(self):
         result = subprocess.run(
             ["python3", str(SCRIPT),
-             str(FIXTURES / "skill.invalid-bad-description" / "SKILL.md")],
+             str(FIXTURES / "skill.invalid-bad-description" / "SKILL-FIXTURE.md")],
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 1)
