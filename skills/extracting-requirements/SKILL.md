@@ -17,13 +17,7 @@ Invoked by `iterative-development` during bootstrap, or standalone when you need
 
 ## Script Location
 
-All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
-
-```bash
-SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
-```
-
-Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
 
 ## Pipeline
 
@@ -32,7 +26,7 @@ Replace `<this-skill's-base-directory>` with the actual base directory shown whe
 Enumerate the spec files without reading full contents:
 
 ```bash
-python3 "$SCRIPTS_DIR/chunk_spec.py" <spec-path>
+python3 "scripts/chunk_spec.py" <spec-path>
 ```
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
@@ -42,17 +36,17 @@ This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `
 For each chunk (or batch of small chunks), dispatch an extraction subagent using the template in `extraction-subagent-prompt.md`. Pass the chunk content inline — do NOT make the subagent read the file.
 
 **Dispatch strategy:**
-- Dispatch subagents in parallel where possible (use the Agent tool with multiple parallel calls)
-- Main agent chooses parallelism based on chunk count and judgment
+- Dispatch subagents in parallel, but respect runtime thread limits (typically 3-6 concurrent agents). Batch chunks into waves if the chunk count exceeds the limit.
 - Each subagent returns a JSON object with a `stories` array
 - Save each subagent's output to a temp JSON file
+- **Track completion:** record which chunks were dispatched and which returned successfully. If any subagent fails or times out, re-dispatch that chunk before proceeding to aggregation.
 
 ### 3. Aggregate
 
 Run the aggregation script on all extracted story JSONs:
 
 ```bash
-python3 "$SCRIPTS_DIR/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
+python3 "scripts/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
 ```
 
 The script:
@@ -80,15 +74,28 @@ After aggregation, review the epic list and consolidate:
 
 **Do NOT merge epics that are legitimately different.** "Keyboard Input" (raw event handling) and "Keyboard Shortcuts" (user-configurable bindings) are separate concerns even though both say "Keyboard." Use domain judgment.
 
-### 5. Validate
+### 5. Coverage verification
+
+After aggregation and consolidation, verify extraction coverage:
+
+1. List every spec file and its `##` headings (from the chunk inventory in step 1)
+2. For each spec section, check that at least one story in the requirements index cites that source file
+3. Flag any spec file or major section with zero story coverage — these are gaps in extraction
+4. If gaps exist: re-run extraction subagents on the uncovered chunks and re-aggregate
+
+This step catches silent under-scoping — the most dangerous failure mode is an extraction that looks complete but missed entire spec surfaces.
+
+**Derivative artifacts warning:** if the spec directory contains both canonical documents (e.g., domain specs, journey specs) and derivative summaries (e.g., acceptance-criteria rollups, audit reports), always extract from the canonical documents. Derivative artifacts may collapse or omit detail. If you use derivatives as a convenience, verify their coverage against the canonical source list.
+
+### 6. Validate
 
 ```bash
-python3 "$SCRIPTS_DIR/validate_artifact.py" --type requirements-index docs/superpowers/iterations/requirements-index.md
+python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements-index.md
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 
-### 6. Commit
+### 7. Commit
 
 ```bash
 git add docs/superpowers/iterations/requirements-index.md
@@ -99,11 +106,12 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 
 | Step | Tool | Input | Output |
 |---|---|---|---|
-| Chunk | `$SCRIPTS_DIR/chunk_spec.py` | spec path | JSON chunks (stdout) |
+| Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
-| Aggregate | `$SCRIPTS_DIR/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
+| Aggregate | `scripts/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
 | Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
-| Validate | `$SCRIPTS_DIR/validate_artifact.py --type requirements-index` | .md file | OK or errors |
+| Coverage check | Compare chunk inventory → story sources | chunk list, stories | Uncovered spec sections |
+| Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |
 
 ## Deferred to later plans
 

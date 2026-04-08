@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent.parent / "scripts" / "check_citations.py"
+SCRIPT = Path(__file__).parent.parent / "skills" / "scoping-the-simplest-core" / "scripts" / "check_citations.py"
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

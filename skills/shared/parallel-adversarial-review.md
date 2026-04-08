@@ -37,6 +37,17 @@ When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-qu
 | Per-task code quality | Code-quality reviewer | `implementing-tasks` (Plan 5) |
 | Per-sprint audit | Auditor | `auditing-progress` (this plan) |
 
+## Single-Agent Fallback
+
+If subagent dispatch is unavailable (session policy, runtime limits, or tool restrictions):
+
+1. Perform the first review pass yourself, using the same domain-specific prompt
+2. Commit the findings, then perform a second pass with the explicit instruction: "Find issues the first review missed. Score 5 points for each new finding."
+3. Aggregate both passes as if they were parallel reviewers
+4. When reviewing code, use `git diff HEAD` AND `git ls-files --others --exclude-standard` to cover both tracked changes and new untracked files — `git diff` alone misses new files
+
+This fallback is weaker than true PAR (same model, sequential, no sampling variance) but maintains the adversarial structure. Use it only when parallel dispatch is genuinely impossible.
+
 ## Where PAR Does NOT Apply
 
 - Implementer subagents (doers, not evaluators)

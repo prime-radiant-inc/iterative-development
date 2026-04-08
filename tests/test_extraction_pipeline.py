@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPTS = Path(__file__).parent.parent / "scripts"
+EXTRACT_SCRIPTS = Path(__file__).parent.parent / "skills" / "extracting-requirements" / "scripts"
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
@@ -18,7 +18,7 @@ class TestExtractionPipeline(unittest.TestCase):
         """Full pipeline: chunk the multi-file spec, aggregate the sample output, validate."""
         # Step 1: Chunk the multi-file spec (verifies chunking works on fixture)
         chunk_result = subprocess.run(
-            ["python3", str(SCRIPTS / "chunk_spec.py"),
+            ["python3", str(EXTRACT_SCRIPTS / "chunk_spec.py"),
              str(FIXTURES / "multi-file-spec")],
             capture_output=True, text=True,
         )
@@ -28,7 +28,7 @@ class TestExtractionPipeline(unittest.TestCase):
 
         # Step 2: Aggregate the sample extraction output (simulates what subagents return)
         agg_result = subprocess.run(
-            ["python3", str(SCRIPTS / "aggregate_stories.py"),
+            ["python3", str(EXTRACT_SCRIPTS / "aggregate_stories.py"),
              str(FIXTURES / "extracted-stories-sample.json")],
             capture_output=True, text=True,
         )
@@ -40,8 +40,8 @@ class TestExtractionPipeline(unittest.TestCase):
             tmp = f.name
         try:
             val_result = subprocess.run(
-                ["python3", str(SCRIPTS / "validate_artifact.py"),
-                 "--type", "requirements-index", tmp],
+                ["python3", str(EXTRACT_SCRIPTS / "validate_requirements_index.py"),
+                 tmp],
                 capture_output=True, text=True,
             )
             self.assertEqual(val_result.returncode, 0,
@@ -52,7 +52,7 @@ class TestExtractionPipeline(unittest.TestCase):
     def test_aggregated_output_has_correct_story_count(self):
         """Sample fixture has 5 stories — aggregation should produce 5 STORY headers."""
         result = subprocess.run(
-            ["python3", str(SCRIPTS / "aggregate_stories.py"),
+            ["python3", str(EXTRACT_SCRIPTS / "aggregate_stories.py"),
              str(FIXTURES / "extracted-stories-sample.json")],
             capture_output=True, text=True,
         )
@@ -63,7 +63,7 @@ class TestExtractionPipeline(unittest.TestCase):
     def test_aggregated_output_has_correct_epic_count(self):
         """Sample fixture has 2 epic themes — aggregation should produce 2 EPIC headers."""
         result = subprocess.run(
-            ["python3", str(SCRIPTS / "aggregate_stories.py"),
+            ["python3", str(EXTRACT_SCRIPTS / "aggregate_stories.py"),
              str(FIXTURES / "extracted-stories-sample.json")],
             capture_output=True, text=True,
         )

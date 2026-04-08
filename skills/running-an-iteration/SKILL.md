@@ -15,13 +15,7 @@ Invoked by `iterative-development` inside the main loop. Each invocation runs ex
 
 ## Script Location
 
-All scripts referenced below live in the plugin's `scripts/` directory. Before running any script commands, set:
-
-```bash
-SCRIPTS_DIR="<this-skill's-base-directory>/../../scripts"
-```
-
-Replace `<this-skill's-base-directory>` with the actual base directory shown when this skill was loaded.
+All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
 
 ## Iteration Process
 
@@ -33,11 +27,18 @@ Read `docs/superpowers/iterations/roadmap.md`, find the first iteration with sta
 
 Read `docs/superpowers/iterations/requirements-index.md`, load the full story cards for each committed story ID. Also load the next 3 pending iterations from the roadmap for look-ahead.
 
-### 3. Mechanical citation check
+### 3. Pre-iteration consistency audit
 
-Run: `python3 "$SCRIPTS_DIR/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Before planning any work, verify that artifact state is consistent:
 
-If citations fail, stop and fix the roadmap before proceeding.
+1. **Citation check:** `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md` — if citations fail, stop and fix the roadmap.
+2. **Status reconciliation:** For each story in this iteration's scope, verify:
+   - Stories listed in the roadmap iteration are not already marked `done:ITER-XXXX` in the requirements index (unless code/tests actually exist for them)
+   - Stories marked `done` in the requirements index actually have corresponding code and tests
+   - No story appears in multiple pending iterations
+3. **Epic counter validation:** Spot-check that epic progress counters (e.g., "3/8 done") match the actual count of `done` stories in that epic. If they've drifted, fix them.
+
+If any inconsistencies are found, reconcile before proceeding. Do not trust any single artifact blindly — cross-check.
 
 ### 4. Pre-iteration scope review (PAR)
 
@@ -53,6 +54,8 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 Break the iteration scope into TDD-sized tasks. Each task = failing test → implementation → passing test → commit. Iteration granularity is judgment-based, not defaulted.
 
+**Cross-iteration dependencies:** Some stories reference subsystems that don't exist yet (built in a later iteration). For these stories, implement a protocol/abstraction that satisfies the story's ACs without coupling to the future implementation. Document the dependency with a TODO comment citing the future iteration. Do NOT defer the story silently or force premature integration — build the interface now, wire the real implementation later.
+
 ### 6. Dispatch implementing-tasks
 
 Pass the task list and iteration context to `implementing-tasks`. Wait for completion.
@@ -63,20 +66,20 @@ Pass the task list and iteration context to `implementing-tasks`. Wait for compl
 - Mark stories `done:ITER-NNNN` in `requirements-index.md`
 - Update iteration status in `roadmap.md` to `done`
 - Append entry to `docs/superpowers/iterations/iteration-log.md`
-- Validate: `python3 "$SCRIPTS_DIR/validate_artifact.py" --type iteration-log docs/superpowers/iterations/iteration-log.md`
+- Validate: `python3 "scripts/validate_iteration_log.py" docs/superpowers/iterations/iteration-log.md`
 - Return control to orchestrator (do NOT invoke `auditing-progress` — that's the orchestrator's job)
 
 ## Quick Reference
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `$SCRIPTS_DIR/check_citations.py` | Mechanical: cited stories exist |
+| Citation check | `scripts/check_citations.py` | Mechanical: cited stories exist |
 | Scope review | PAR + `scope-reviewer-prompt.md` | Semantic: scope creep, boxing-in |
 | Task execution | `implementing-tasks` | TDD implementation |
-| Wrap up | `$SCRIPTS_DIR/validate_artifact.py` | Artifact validation |
+| Wrap up | `scripts/validate_iteration_log.py` | Artifact validation |
 
 ## References
 
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
 - `scope-reviewer-prompt.md` — scope reviewer prompt template
-- `$SCRIPTS_DIR/check_citations.py` — mechanical citation check
+- `scripts/check_citations.py` — mechanical citation check
