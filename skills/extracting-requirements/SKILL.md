@@ -56,7 +56,35 @@ The script:
 - Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
 - Outputs formatted `requirements-index.md`
 
-### 4. Consolidate epics
+### 4. PAR omission review
+
+Before aggregation, run a PAR omission review. The sole job of this review is to find requirements that the extraction subagents dropped.
+
+For each chunk (or batch of chunks), dispatch two reviewers in parallel following `skills/shared/parallel-adversarial-review.md`:
+
+1. Give each reviewer the **original chunk text** and the **extracted stories** for that chunk
+2. Prompt: "Compare the source text against the extracted stories. Find every requirement, acceptance criterion, or behavioral constraint in the source that is NOT represented by any extracted story. Score 5 points for each omission found."
+3. Aggregate findings across both reviewers
+4. For each confirmed omission: either add a new story to the extraction output or document why it's intentionally excluded (non-normative, duplicate of another story, out of scope)
+
+This pass is required, not optional. Extraction subagents optimize for what they notice; omission reviewers optimize for what's missing. These are different cognitive tasks.
+
+### 5. Aggregate
+
+Run the aggregation script on all extracted story JSONs (including any stories added by the omission review):
+
+```bash
+python3 "scripts/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
+```
+
+The script:
+- Combines all stories from all input files
+- Deduplicates by exact title match (merges sources)
+- Groups stories into epics by `epic_theme`
+- Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
+- Outputs formatted `requirements-index.md`
+
+### 6. Consolidate epics
 
 The aggregation script groups by exact `epic_theme` string. Since extraction subagents work independently, they often name the same domain differently — producing duplicate or near-duplicate epics.
 
@@ -71,23 +99,31 @@ After aggregation, review the epic list and consolidate:
 3. For each merge: update the `epic_theme` in the extracted JSON files to use the canonical name
 4. Re-run the aggregation script to produce the consolidated index
 5. Verify the epic count is reasonable (roughly 20-40 for a large project, fewer for smaller ones)
+6. **Consolidation safety check:** after merging epics, verify that no distinct requirements were collapsed. If two epics had stories with different ACs that got deduplicated by title match during re-aggregation, those stories need to be restored or merged explicitly. The deduplication is by exact title only — if two stories have the same title but different ACs from different source sections, the merge silently drops one set of ACs.
 
 **Do NOT merge epics that are legitimately different.** "Keyboard Input" (raw event handling) and "Keyboard Shortcuts" (user-configurable bindings) are separate concerns even though both say "Keyboard." Use domain judgment.
 
-### 5. Coverage verification
+### 7. Coverage ledger
 
-After aggregation and consolidation, verify extraction coverage:
+Build a coverage ledger that maps every spec chunk to its extracted stories. This is the traceable proof that extraction is complete.
 
-1. List every spec file and its `##` headings (from the chunk inventory in step 1)
-2. For each spec section, check that at least one story in the requirements index cites that source file
-3. Flag any spec file or major section with zero story coverage — these are gaps in extraction
-4. If gaps exist: re-run extraction subagents on the uncovered chunks and re-aggregate
+For each chunk from the inventory (step 1):
 
-This step catches silent under-scoping — the most dangerous failure mode is an extraction that looks complete but missed entire spec surfaces.
+1. List the chunk: `source_file`, `heading`, `start_line`–`end_line`
+2. List every story ID whose `**Sources:**` field cites overlapping lines in that file
+3. Classify the chunk:
+   - **covered** — at least one story with ACs that correspond to the chunk's normative content
+   - **non-normative** — chunk contains only meta-commentary, table of contents, or boilerplate (explain why)
+   - **duplicate** — chunk's requirements are covered by stories citing a different source (cite the covering stories)
+   - **gap** — normative content with no corresponding story
+
+**Hard gate:** if any chunk is classified as **gap**, extraction is incomplete. Re-extract the gap chunks and repeat from step 4 (omission review). Do not proceed to scoping with known gaps.
+
+**Important:** "covered" means a story exists whose ACs correspond to the chunk's normative requirements — not just that a story cites the file. One broad story can make a chunk look covered while dropping smaller requirements inside it. Check ACs, not just source citations.
 
 **Derivative artifacts warning:** if the spec directory contains both canonical documents (e.g., domain specs, journey specs) and derivative summaries (e.g., acceptance-criteria rollups, audit reports), always extract from the canonical documents. Derivative artifacts may collapse or omit detail. If you use derivatives as a convenience, verify their coverage against the canonical source list.
 
-### 6. Validate
+### 8. Validate
 
 ```bash
 python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements-index.md
@@ -95,7 +131,7 @@ python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/req
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 
-### 7. Commit
+### 9. Commit
 
 ```bash
 git add docs/superpowers/iterations/requirements-index.md
@@ -108,9 +144,10 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 |---|---|---|---|
 | Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
+| Omission review | PAR (source text vs. extracted stories) | chunks + stories | Missing requirements |
 | Aggregate | `scripts/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
 | Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
-| Coverage check | Compare chunk inventory → story sources | chunk list, stories | Uncovered spec sections |
+| Coverage ledger | Map every chunk → story IDs + classification | chunk list, stories | Gap/covered/non-normative per chunk |
 | Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |
 
 ## Deferred to later plans
