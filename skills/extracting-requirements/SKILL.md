@@ -36,10 +36,10 @@ This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `
 For each chunk (or batch of small chunks), dispatch an extraction subagent using the template in `extraction-subagent-prompt.md`. Pass the chunk content inline — do NOT make the subagent read the file.
 
 **Dispatch strategy:**
-- Dispatch subagents in parallel where possible (use the Agent tool with multiple parallel calls)
-- Main agent chooses parallelism based on chunk count and judgment
+- Dispatch subagents in parallel, but respect runtime thread limits (typically 3-6 concurrent agents). Batch chunks into waves if the chunk count exceeds the limit.
 - Each subagent returns a JSON object with a `stories` array
 - Save each subagent's output to a temp JSON file
+- **Track completion:** record which chunks were dispatched and which returned successfully. If any subagent fails or times out, re-dispatch that chunk before proceeding to aggregation.
 
 ### 3. Aggregate
 
@@ -74,7 +74,20 @@ After aggregation, review the epic list and consolidate:
 
 **Do NOT merge epics that are legitimately different.** "Keyboard Input" (raw event handling) and "Keyboard Shortcuts" (user-configurable bindings) are separate concerns even though both say "Keyboard." Use domain judgment.
 
-### 5. Validate
+### 5. Coverage verification
+
+After aggregation and consolidation, verify extraction coverage:
+
+1. List every spec file and its `##` headings (from the chunk inventory in step 1)
+2. For each spec section, check that at least one story in the requirements index cites that source file
+3. Flag any spec file or major section with zero story coverage — these are gaps in extraction
+4. If gaps exist: re-run extraction subagents on the uncovered chunks and re-aggregate
+
+This step catches silent under-scoping — the most dangerous failure mode is an extraction that looks complete but missed entire spec surfaces.
+
+**Derivative artifacts warning:** if the spec directory contains both canonical documents (e.g., domain specs, journey specs) and derivative summaries (e.g., acceptance-criteria rollups, audit reports), always extract from the canonical documents. Derivative artifacts may collapse or omit detail. If you use derivatives as a convenience, verify their coverage against the canonical source list.
+
+### 6. Validate
 
 ```bash
 python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements-index.md
@@ -82,7 +95,7 @@ python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/req
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 
-### 6. Commit
+### 7. Commit
 
 ```bash
 git add docs/superpowers/iterations/requirements-index.md
@@ -97,6 +110,7 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
 | Aggregate | `scripts/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
 | Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
+| Coverage check | Compare chunk inventory → story sources | chunk list, stories | Uncovered spec sections |
 | Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |
 
 ## Deferred to later plans

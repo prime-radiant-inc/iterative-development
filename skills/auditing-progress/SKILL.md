@@ -42,7 +42,15 @@ Following PAR aggregation rules:
 - Finding from only one auditor → separate finding, still actionable
 - Severity disagreement → take the more severe assessment, always fix it
 
-### 4. Process results
+### 4. Code-inspection evidence
+
+Some ACs are verified by code inspection rather than automated tests (e.g., "uses protocol X", "follows pattern Y"). For these:
+
+1. List each code-inspection AC explicitly
+2. Cite the specific file and line that satisfies it
+3. Include this evidence in the audit findings so it's traceable, not ad-hoc
+
+### 5. Process results
 
 - **If gaps found** (any AC fails in the aggregated report):
   - Append gap stories to `requirements-index.md` (status `pending`) or flip existing stories back from `done` to `pending`
@@ -51,7 +59,7 @@ Following PAR aggregation rules:
   - The iteration is confirmed done
   - Return clean signal to the orchestrator
 
-### 5. Return control
+### 6. Return control
 
 Return the audit result (clean or gaps) to the orchestrator. The orchestrator decides whether to loop or terminate.
 

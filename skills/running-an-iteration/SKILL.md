@@ -27,11 +27,18 @@ Read `docs/superpowers/iterations/roadmap.md`, find the first iteration with sta
 
 Read `docs/superpowers/iterations/requirements-index.md`, load the full story cards for each committed story ID. Also load the next 3 pending iterations from the roadmap for look-ahead.
 
-### 3. Mechanical citation check
+### 3. Pre-iteration consistency audit
 
-Run: `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Before planning any work, verify that artifact state is consistent:
 
-If citations fail, stop and fix the roadmap before proceeding.
+1. **Citation check:** `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md` — if citations fail, stop and fix the roadmap.
+2. **Status reconciliation:** For each story in this iteration's scope, verify:
+   - Stories listed in the roadmap iteration are not already marked `done:ITER-XXXX` in the requirements index (unless code/tests actually exist for them)
+   - Stories marked `done` in the requirements index actually have corresponding code and tests
+   - No story appears in multiple pending iterations
+3. **Epic counter validation:** Spot-check that epic progress counters (e.g., "3/8 done") match the actual count of `done` stories in that epic. If they've drifted, fix them.
+
+If any inconsistencies are found, reconcile before proceeding. Do not trust any single artifact blindly — cross-check.
 
 ### 4. Pre-iteration scope review (PAR)
 
@@ -46,6 +53,8 @@ Following `skills/shared/parallel-adversarial-review.md`:
 ### 5. Decompose into tasks
 
 Break the iteration scope into TDD-sized tasks. Each task = failing test → implementation → passing test → commit. Iteration granularity is judgment-based, not defaulted.
+
+**Cross-iteration dependencies:** Some stories reference subsystems that don't exist yet (built in a later iteration). For these stories, implement a protocol/abstraction that satisfies the story's ACs without coupling to the future implementation. Document the dependency with a TODO comment citing the future iteration. Do NOT defer the story silently or force premature integration — build the interface now, wire the real implementation later.
 
 ### 6. Dispatch implementing-tasks
 

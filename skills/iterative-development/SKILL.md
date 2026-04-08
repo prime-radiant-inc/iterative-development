@@ -41,7 +41,10 @@ while True:
 
     if not roadmap has pending iterations:
         if last audit was clean:
-            break  # done
+            run final spec-surface audit (see below)
+            if spec audit clean:
+                break  # done
+            # else: spec audit found uncovered surfaces, new iterations added
         # else: audit found gaps, new iterations were added, continue
 
     run next iteration:
@@ -52,6 +55,17 @@ while True:
         - if gaps: append to backlog, revise roadmap, continue
         - if clean: mark last_audit_clean, continue
 ```
+
+### Final spec-surface audit
+
+Before declaring the project complete, verify that the product covers the spec — not just that all stories are marked done:
+
+1. List every major user-facing surface from the original spec (settings panes, UI flows, CLI commands, etc.)
+2. For each surface, verify that corresponding stories exist AND are implemented (not just extracted)
+3. Flag any spec surface with no corresponding story or with placeholder-only implementation
+4. If gaps found: create new stories and iterations, continue the loop
+
+This catches the failure mode where extraction under-scoped the project — stories that were never created can't be caught by story-level audits.
 
 ### Resume (re-invocation with existing state)
 
@@ -82,6 +96,10 @@ The loop runs without human intervention. The only way the human injects new inf
 - The orchestrator does not poll the filesystem for spec changes
 - The orchestrator does not ask "anything to change?" between iterations
 - Human presence is not required at iteration boundaries
+
+## Skill Precedence
+
+When running autonomously, this orchestrator takes precedence over interactive-gate skills (e.g., `brainstorming` which requires design approval before implementation). The iterative-development process has its own design gates (scope review, PAR) that replace interactive approval. Do not block on skills that assume a human is present to approve each step.
 
 ## Escalation Policy
 
