@@ -47,13 +47,39 @@ Following `skills/shared/parallel-adversarial-review.md`:
    - Is ITER-0000 really the thinnest possible walking skeleton?
    - Could anything be deferred from ITER-0000 to a follow-on?
    - Does ITER-0000's design box in any follow-on iteration?
-4. If REVISE recommended: adjust and re-review until APPROVE
+   - Are any stories over-broad (mixing skeleton-level concerns with later integrations)?
+4. **If stories need splitting:** the scope review may reveal that extracted stories are too broad for a walking skeleton — e.g., a story that mixes a thin shell implementation with a full subsystem integration. When this happens, split the story: create a skeleton-scoped version for ITER-0000 and defer the full version to a later iteration. Update the requirements index with the split stories before revising the roadmap.
+5. If REVISE recommended: adjust and re-review until APPROVE
 
 ### 6. Write and validate roadmap
 
-Write the result to `docs/superpowers/iterations/roadmap.md` following the format in `tests/fixtures/roadmap.example.md`.
+Write the result to `docs/superpowers/iterations/roadmap.md` using this format:
+
+```markdown
+# Roadmap
+
+## Walking skeleton (ITER-0000)
+
+**Intent:** <one-line description of the thinnest end-to-end slice>
+**Design rationale:** <why these stories, what they prove together>
+**Stories committed:**
+- STORY-NNNN (EPIC-NNN)
+- ...
+**Status:** pending
+
+## Iteration list
+
+### ITER-0001 — <name>
+
+**Stories:** STORY-NNNN, STORY-NNNN, ...
+**Rationale:** <why these stories belong together>
+**Status:** pending
+**Look-ahead check:** <does this block or get blocked by neighbors?>
+```
 
 Run: `python3 "scripts/validate_roadmap.py" docs/superpowers/iterations/roadmap.md`
+
+**Note:** The validator checks format only (required headings and fields). It does not validate iteration structure, status values, or whether the walking skeleton is actually minimal. The PAR scope review is the real structural gate — the validator just catches formatting mistakes.
 
 ### 7. Commit
 
@@ -67,8 +93,9 @@ git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
 | Step | Tool/Skill | Purpose |
 |---|---|---|
 | Citation check | `scripts/check_citations.py` | All cited stories exist |
-| Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in |
-| Validate | `scripts/validate_roadmap.py` | Format check |
+| Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in, stories not over-broad |
+| Story splitting | Manual (if PAR finds broad stories) | Split skeleton-scope from full-scope, update backlog |
+| Validate | `scripts/validate_roadmap.py` | Format check only (PAR is the real gate) |
 
 ## References
 
