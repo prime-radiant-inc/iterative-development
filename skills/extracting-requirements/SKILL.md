@@ -36,10 +36,11 @@ This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `
 For each chunk (or batch of small chunks), dispatch an extraction subagent using the template in `extraction-subagent-prompt.md`. Pass the chunk content inline — do NOT make the subagent read the file.
 
 **Dispatch strategy:**
-- Dispatch subagents in parallel, but respect runtime thread limits (typically 3-6 concurrent agents). Batch chunks into waves if the chunk count exceeds the limit.
-- Each subagent returns a JSON object with a `stories` array
-- Save each subagent's output to a temp JSON file
-- **Track completion:** record which chunks were dispatched and which returned successfully. If any subagent fails or times out, re-dispatch that chunk before proceeding to aggregation.
+- Dispatch subagents in waves of 3-5 (runtime agent thread limits are typically 6; keep headroom). Do not fan out all chunks at once.
+- **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., `.codex-temp/extraction/raw/batch-NN.json` or equivalent) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
+- **Wait semantics:** if your runtime's wait primitive returns on the first completed agent (not all), loop until every dispatched agent in the wave has reached a final state. Persist each result as it arrives.
+- Close completed agents promptly to free thread slots for the next wave.
+- **Track completion:** maintain a checklist of chunk-to-agent mappings. After all waves finish, verify every chunk produced a persisted output file. Re-dispatch any missing chunks before proceeding.
 
 ### 3. Aggregate
 
