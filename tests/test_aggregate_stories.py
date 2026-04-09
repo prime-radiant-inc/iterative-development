@@ -1,5 +1,7 @@
 """Unit tests for extracting-requirements/scripts/aggregate_stories.py."""
 import json
+import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -11,33 +13,42 @@ VALIDATOR = Path(__file__).parent.parent / "skills" / "extracting-requirements" 
 
 
 class TestAggregateStories(unittest.TestCase):
+    def setUp(self):
+        self.out_dir = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.out_dir, ignore_errors=True)
+
+    def _run(self, *extra_args):
+        return subprocess.run(
+            ["python3", str(SCRIPT), "-o", str(self.out_dir), *extra_args],
+            capture_output=True, text=True,
+        )
+
+    def _read_all(self) -> str:
+        """Read all .md files in output dir concatenated."""
+        parts = []
+        for f in sorted(self.out_dir.glob("*.md")):
+            parts.append(f.read_text())
+        return "\n".join(parts)
+
     def test_script_exists(self):
         self.assertTrue(SCRIPT.exists())
 
-    def test_sample_fixture_produces_valid_index(self):
-        """Aggregating the sample fixture should produce a valid requirements-index.md."""
-        result = subprocess.run(
-            ["python3", str(SCRIPT), str(FIXTURES / "extracted-stories-sample.json")],
+    def test_sample_fixture_produces_valid_output(self):
+        """Aggregating the sample fixture should produce valid per-epic files."""
+        result = self._run(str(FIXTURES / "extracted-stories-sample.json"))
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        # Should create epic files
+        epic_files = list(self.out_dir.glob("EPIC-*.md"))
+        self.assertGreater(len(epic_files), 0)
+        # Validate the output directory
+        val_result = subprocess.run(
+            ["python3", str(VALIDATOR), str(self.out_dir)],
             capture_output=True, text=True,
         )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
-        output = result.stdout
-        # Should contain story and epic headers
-        self.assertIn("## STORY-0001", output)
-        self.assertIn("## EPIC-", output)
-        # Validate the output with the artifact validator
-        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
-            f.write(output)
-            tmp = f.name
-        try:
-            val_result = subprocess.run(
-                ["python3", str(VALIDATOR), tmp],
-                capture_output=True, text=True,
-            )
-            self.assertEqual(val_result.returncode, 0,
-                             msg=f"Validator failed: {val_result.stderr}")
-        finally:
-            Path(tmp).unlink()
+        self.assertEqual(val_result.returncode, 0,
+                         msg=f"Validator failed: {val_result.stderr}")
 
     def test_dedup_merges_duplicate_titles(self):
         """Stories with identical titles should be merged, sources combined."""
@@ -61,12 +72,9 @@ class TestAggregateStories(unittest.TestCase):
             json.dump(stories, f)
             tmp = f.name
         try:
-            result = subprocess.run(
-                ["python3", str(SCRIPT), tmp],
-                capture_output=True, text=True,
-            )
+            result = self._run(tmp)
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            output = result.stdout
+            output = self._read_all()
             # Should have exactly ONE STORY (deduped)
             self.assertEqual(output.count("## STORY-"), 1)
             # But should cite both sources
@@ -75,29 +83,18 @@ class TestAggregateStories(unittest.TestCase):
         finally:
             Path(tmp).unlink()
 
-    def test_epics_grouped_by_theme(self):
-        """Stories with different epic_themes get different EPIC IDs."""
-        result = subprocess.run(
-            ["python3", str(SCRIPT), str(FIXTURES / "extracted-stories-sample.json")],
-            capture_output=True, text=True,
-        )
-        output = result.stdout
-        # Sample has 2 themes: "Task Management" (3 stories) and "Billing" (2 stories)
-        self.assertIn("Task Management", output)
-        self.assertIn("Billing", output)
-        # Should have 2 epics
-        import re
-        epic_ids = re.findall(r"## EPIC-\d+", output)
-        self.assertEqual(len(epic_ids), 2)
+    def test_epics_grouped_into_separate_files(self):
+        """Stories with different epic_themes get separate files."""
+        result = self._run(str(FIXTURES / "extracted-stories-sample.json"))
+        # Sample has 2 themes: "Task Management" and "Billing"
+        epic_files = sorted(self.out_dir.glob("EPIC-*.md"))
+        self.assertEqual(len(epic_files), 2)
 
     def test_story_ids_are_sequential(self):
         """Story IDs should be assigned sequentially starting from 0001."""
-        result = subprocess.run(
-            ["python3", str(SCRIPT), str(FIXTURES / "extracted-stories-sample.json")],
-            capture_output=True, text=True,
-        )
-        import re
-        story_ids = re.findall(r"## STORY-(\d+)", result.stdout)
+        self._run(str(FIXTURES / "extracted-stories-sample.json"))
+        output = self._read_all()
+        story_ids = re.findall(r"## STORY-(\d+)", output)
         self.assertEqual(story_ids, ["0001", "0002", "0003", "0004", "0005"])
 
     def test_no_input_returns_error(self):

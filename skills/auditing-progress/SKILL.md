@@ -17,7 +17,7 @@ Invoked by `iterative-development` after every `running-an-iteration` call, befo
 
 ### 1. Partition the audit into two tiers
 
-Read `docs/superpowers/iterations/requirements-index.md`:
+Read the per-epic requirement files in `docs/superpowers/iterations/requirements/`:
 
 - **Deep tier:** stories marked `done:ITER-<current>` — the ones this iteration just delivered. Audit every AC thoroughly.
 - **Sweep tier:** all other stories previously marked `done:ITER-<earlier>`. Light sanity check — run test suites, spot-check ACs, look for regressions. Not a full re-verification.
@@ -53,7 +53,7 @@ Some ACs are verified by code inspection rather than automated tests (e.g., "use
 ### 5. Process results
 
 - **If gaps found** (any AC fails in the aggregated report):
-  - Append gap stories to `requirements-index.md` (status `pending`) or flip existing stories back from `done` to `pending`
+  - Append gap stories to `requirements/` (status `pending`) or flip existing stories back from `done` to `pending`
   - Revise `roadmap.md` to add a follow-up iteration for the gaps
 - **If clean** (all ACs pass, no unrequested features):
   - The iteration is confirmed done
@@ -67,7 +67,7 @@ Return the audit result (clean or gaps) to the orchestrator. The orchestrator de
 
 | Reads | Writes | Dispatches |
 |---|---|---|
-| `requirements-index.md`, product code/tests | `requirements-index.md` (gaps), `roadmap.md` (new iteration) if gaps | **Two** auditor subagents in parallel (PAR) |
+| `requirements/`, product code/tests | `requirements/` (gaps), `roadmap.md` (new iteration) if gaps | **Two** auditor subagents in parallel (PAR) |
 
 ## References
 

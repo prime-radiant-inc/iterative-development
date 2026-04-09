@@ -27,7 +27,7 @@ Do NOT use for small, bounded projects — `superpowers:writing-plans → superp
 1. Check `docs/superpowers/iterations/` for existing state. If found, skip to **Resume** below.
 2. Invoke `extracting-requirements` on the human-provided spec path.
    - Chunks the spec, dispatches parallel extraction subagents, aggregates results
-   - Produces `docs/superpowers/iterations/requirements-index.md`
+   - Produces `docs/superpowers/iterations/requirements/`
 3. Invoke `scoping-the-simplest-core` on the resulting backlog.
    - Defines the walking skeleton iteration (ITER-0000) + ordered follow-on iterations
    - Runs citation check + PAR scope review
@@ -70,7 +70,7 @@ This catches the failure mode where extraction under-scoped the project — stor
 ### Resume (re-invocation with existing state)
 
 All process state lives in three artifact files:
-- `docs/superpowers/iterations/requirements-index.md` (backlog with story status)
+- `docs/superpowers/iterations/requirements/` (backlog with story status)
 - `docs/superpowers/iterations/roadmap.md` (iteration plan with status)
 - `docs/superpowers/iterations/iteration-log.md` (completed iteration history)
 
@@ -118,7 +118,7 @@ The orchestrator does NOT prompt "should I continue?" between iterations.
 
 | Phase | Skill | What it does |
 |---|---|---|
-| Extract | `extracting-requirements` | Chunk → parallel extract → aggregate → `requirements-index.md` |
+| Extract | `extracting-requirements` | Chunk → parallel extract → aggregate → `requirements/` |
 | Scope | `scoping-the-simplest-core` | Walking skeleton + iterations → `roadmap.md` (with PAR scope review) |
 | Implement | `running-an-iteration` | Scope review → decompose → `implementing-tasks` → wrap up |
 | Task execution | `implementing-tasks` | Per-task: implementer → PAR spec review → PAR quality review |
@@ -130,7 +130,7 @@ All plugin artifacts live in `docs/superpowers/iterations/`. Never modify the hu
 
 | File | Purpose |
 |---|---|
-| `requirements-index.md` | Backlog: story cards + epics with stable IDs |
+| `requirements/` | Backlog: story cards + epics with stable IDs |
 | `roadmap.md` | Sprint plan: ordered iterations with status |
 | `iteration-log.md` | Sprint history: what each iteration delivered |
 

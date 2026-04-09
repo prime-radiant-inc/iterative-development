@@ -22,6 +22,7 @@ done
 echo ""
 echo "=== Validating artifact format fixtures ==="
 python3 skills/extracting-requirements/scripts/validate_requirements_index.py tests/fixtures/requirements-index.example.md
+python3 skills/extracting-requirements/scripts/validate_requirements_index.py tests/fixtures/requirements-dir.example
 python3 skills/scoping-the-simplest-core/scripts/validate_roadmap.py tests/fixtures/roadmap.example.md
 python3 skills/running-an-iteration/scripts/validate_iteration_log.py tests/fixtures/iteration-log.example.md
 
@@ -29,8 +30,10 @@ echo ""
 echo "=== Verifying extraction pipeline scripts ==="
 python3 skills/extracting-requirements/scripts/chunk_spec.py tests/fixtures/multi-file-spec/ > /dev/null
 echo "OK: chunk_spec.py runs on multi-file-spec fixture"
-python3 skills/extracting-requirements/scripts/aggregate_stories.py tests/fixtures/extracted-stories-sample.json > /dev/null
+TMPDIR_AGG=$(mktemp -d)
+python3 skills/extracting-requirements/scripts/aggregate_stories.py -o "$TMPDIR_AGG" tests/fixtures/extracted-stories-sample.json > /dev/null
 echo "OK: aggregate_stories.py runs on sample fixture"
+rm -rf "$TMPDIR_AGG"
 
 echo ""
 echo "=== Verifying citation checker ==="

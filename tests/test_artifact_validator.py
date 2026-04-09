@@ -15,10 +15,18 @@ class TestRequirementsIndexValidator(unittest.TestCase):
     def test_script_exists(self):
         self.assertTrue(VALIDATE_REQ_INDEX.exists())
 
-    def test_valid_example_passes(self):
+    def test_valid_single_file_passes(self):
         result = subprocess.run(
             ["python3", str(VALIDATE_REQ_INDEX),
              str(FIXTURES / "requirements-index.example.md")],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+    def test_valid_directory_passes(self):
+        result = subprocess.run(
+            ["python3", str(VALIDATE_REQ_INDEX),
+             str(FIXTURES / "requirements-dir.example")],
             capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)

@@ -25,13 +25,13 @@ Read `docs/superpowers/iterations/roadmap.md`, find the first iteration with sta
 
 ### 2. Load scope context
 
-Read `docs/superpowers/iterations/requirements-index.md`, load the full story cards for each committed story ID. Also load the next 3 pending iterations from the roadmap for look-ahead.
+Read the per-epic files in `docs/superpowers/iterations/requirements/` to load the full story cards for each committed story ID. Only read the epic files that contain stories for this iteration — not all of them. Also load the next 3 pending iterations from the roadmap for look-ahead.
 
 ### 3. Pre-iteration consistency audit
 
 Before planning any work, verify that artifact state is consistent:
 
-1. **Citation check:** `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md` — if citations fail, stop and fix the roadmap.
+1. **Citation check:** `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements/` — if citations fail, stop and fix the roadmap.
 2. **Status reconciliation:** For each story in this iteration's scope, verify:
    - Stories listed in the roadmap iteration are not already marked `done:ITER-XXXX` in the requirements index (unless code/tests actually exist for them)
    - Stories marked `done` in the requirements index actually have corresponding code and tests
@@ -63,7 +63,7 @@ Pass the task list and iteration context to `implementing-tasks`. Wait for compl
 ### 7. Wrap up
 
 - Verify all iteration stories' ACs pass (sanity check before audit)
-- Mark stories `done:ITER-NNNN` in `requirements-index.md`
+- Mark stories `done:ITER-NNNN` in the relevant epic files under `requirements/`
 - Update iteration status in `roadmap.md` to `done`
 - Append entry to `docs/superpowers/iterations/iteration-log.md`
 - Validate: `python3 "scripts/validate_iteration_log.py" docs/superpowers/iterations/iteration-log.md`

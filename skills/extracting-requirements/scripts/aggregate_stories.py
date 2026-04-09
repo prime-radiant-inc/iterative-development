@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Aggregate extracted story card JSONs into a requirements-index.md.
+"""Aggregate extracted story card JSONs into per-epic requirement files.
 
-Usage: aggregate_stories.py <json-file>...
+Usage: aggregate_stories.py -o <output-dir> <json-file>...
 
 Takes one or more JSON files (each a list of story objects or {"stories": [...]}),
 deduplicates by title, groups into epics by epic_theme, assigns stable IDs
-(STORY-NNNN, EPIC-NNN), and outputs requirements-index.md to stdout.
+(STORY-NNNN, EPIC-NNN), and writes one file per epic to the output directory.
 """
+import argparse
 import json
 import sys
 from collections import OrderedDict
@@ -54,87 +55,82 @@ def group_into_epics(stories: list[dict]) -> dict[str, list[dict]]:
     return epics
 
 
-def format_requirements_index(epics: dict[str, list[dict]]) -> str:
-    """Format epics and stories as requirements-index.md content."""
-    lines: list[str] = ["# Requirements Index", ""]
-
+def assign_ids(epics: dict[str, list[dict]]) -> None:
+    """Assign stable EPIC-NNN and STORY-NNNN IDs to all stories in place."""
     story_counter = 1
     epic_counter = 1
-
-    # First pass: assign IDs and write epic headers
     for theme, stories in epics.items():
         epic_id = f"EPIC-{epic_counter:03d}"
         epic_counter += 1
-
-        story_ids: list[str] = []
         for story in stories:
-            sid = f"STORY-{story_counter:04d}"
-            story["_id"] = sid
+            story["_id"] = f"STORY-{story_counter:04d}"
             story["_epic_id"] = epic_id
             story["_epic_theme"] = theme
-            story_ids.append(sid)
             story_counter += 1
 
-        primary_sources: set[str] = set()
-        for s in stories:
-            for src in s.get("sources", []):
-                if isinstance(src, dict):
-                    primary_sources.add(src.get("file", ""))
-                elif isinstance(src, str):
-                    primary_sources.add(src)
 
-        lines.append(f"## {epic_id} — {theme}")
+def format_epic_file(epic_id: str, theme: str, stories: list[dict]) -> str:
+    """Format one epic as a standalone markdown file."""
+    lines: list[str] = []
+
+    story_ids = [s["_id"] for s in stories]
+
+    primary_sources: set[str] = set()
+    for s in stories:
+        for src in s.get("sources", []):
+            if isinstance(src, dict):
+                primary_sources.add(src.get("file", ""))
+            elif isinstance(src, str):
+                primary_sources.add(src)
+
+    lines.append(f"# {epic_id} — {theme}")
+    lines.append("")
+    lines.append(f"**Summary:** {theme}")
+    lines.append(f"**Stories:** {', '.join(story_ids)}")
+    if primary_sources:
+        sources_str = ", ".join(f"`{s}`" for s in sorted(primary_sources) if s)
+        lines.append(f"**Primary sources:** {sources_str}")
+    lines.append(f"**Status:** 0/{len(stories)} done")
+    lines.append("")
+
+    for story in stories:
+        lines.append(f"## {story['_id']}")
         lines.append("")
-        lines.append(f"**Summary:** {theme}")
-        lines.append(f"**Stories:** {', '.join(story_ids)}")
-        if primary_sources:
-            sources_str = ", ".join(f"`{s}`" for s in sorted(primary_sources) if s)
-            lines.append(f"**Primary sources:** {sources_str}")
-        lines.append(f"**Status:** 0/{len(stories)} done")
+        lines.append(f"**Epic:** {story['_epic_id']} — {story['_epic_theme']}")
+        lines.append(f"**Title:** {story.get('title', 'Untitled')}")
         lines.append("")
-
-    # Second pass: write story cards
-    for theme, stories in epics.items():
-        for story in stories:
-            sid = story["_id"]
-            epic_id = story["_epic_id"]
-            epic_theme = story["_epic_theme"]
-
-            lines.append(f"## {sid}")
-            lines.append("")
-            lines.append(f"**Epic:** {epic_id} — {epic_theme}")
-            lines.append(f"**Title:** {story.get('title', 'Untitled')}")
-            lines.append("")
-            lines.append(f"**As a** {story.get('as_a', 'user')}")
-            lines.append(f"**I want** {story.get('i_want', 'this feature')}")
-            lines.append(f"**So that** {story.get('so_that', 'I can benefit')}")
-            lines.append("")
-            lines.append("**Acceptance criteria:**")
-            for ac in story.get("acceptance_criteria", []):
-                lines.append(f"- {ac}")
-            lines.append("")
-            lines.append("**Sources:**")
-            for src in story.get("sources", []):
-                if isinstance(src, dict):
-                    file_ref = src.get("file", "unknown")
-                    line_ref = src.get("lines", "")
-                    ref = f"`{file_ref}:{line_ref}`" if line_ref else f"`{file_ref}`"
-                    lines.append(f"- {ref}")
-                elif isinstance(src, str):
-                    lines.append(f"- `{src}`")
-            lines.append("")
-            lines.append("**Status:** pending")
-            lines.append("")
+        lines.append(f"**As a** {story.get('as_a', 'user')}")
+        lines.append(f"**I want** {story.get('i_want', 'this feature')}")
+        lines.append(f"**So that** {story.get('so_that', 'I can benefit')}")
+        lines.append("")
+        lines.append("**Acceptance criteria:**")
+        for ac in story.get("acceptance_criteria", []):
+            lines.append(f"- {ac}")
+        lines.append("")
+        lines.append("**Sources:**")
+        for src in story.get("sources", []):
+            if isinstance(src, dict):
+                file_ref = src.get("file", "unknown")
+                line_ref = src.get("lines", "")
+                ref = f"`{file_ref}:{line_ref}`" if line_ref else f"`{file_ref}`"
+                lines.append(f"- {ref}")
+            elif isinstance(src, str):
+                lines.append(f"- `{src}`")
+        lines.append("")
+        lines.append("**Status:** pending")
+        lines.append("")
 
     return "\n".join(lines)
 
 
 def main() -> int:
-    if len(sys.argv) < 2:
-        print("usage: aggregate_stories.py <json-file>...", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(description="Aggregate stories into per-epic files")
+    parser.add_argument("-o", "--output-dir", required=True,
+                        help="Directory to write per-epic files (created if needed)")
+    parser.add_argument("json_files", nargs="+", help="Extracted story JSON files")
+    args = parser.parse_args()
 
-    paths = [Path(p) for p in sys.argv[1:]]
+    paths = [Path(p) for p in args.json_files]
     for p in paths:
         if not p.exists():
             print(f"error: file not found: {p}", file=sys.stderr)
@@ -147,8 +143,20 @@ def main() -> int:
 
     deduped = dedup_stories(stories)
     epics = group_into_epics(deduped)
-    output = format_requirements_index(epics)
-    print(output)
+    assign_ids(epics)
+
+    out_dir = Path(args.output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for theme, epic_stories in epics.items():
+        epic_id = epic_stories[0]["_epic_id"]
+        content = format_epic_file(epic_id, theme, epic_stories)
+        out_path = out_dir / f"{epic_id}.md"
+        out_path.write_text(content)
+        print(f"wrote {out_path} ({len(epic_stories)} stories)")
+
+    total = sum(len(s) for s in epics.values())
+    print(f"OK: {len(epics)} epics, {total} stories")
     return 0
 
 

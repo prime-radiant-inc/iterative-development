@@ -1,13 +1,13 @@
 ---
 name: scoping-the-simplest-core
-description: Use when turning a requirements-index.md into a roadmap — selects the walking skeleton iteration and orders the remaining work into follow-on iterations that can each be delivered as a single sprint.
+description: Use when turning extracted requirements into a roadmap — selects the walking skeleton iteration and orders the remaining work into follow-on iterations that can each be delivered as a single sprint.
 ---
 
 # Scoping the Simplest Core
 
 ## Overview
 
-Reads `docs/superpowers/iterations/requirements-index.md` and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus ordered follow-on iterations. Runs citation and scope review via PAR before committing the roadmap.
+Reads the per-epic requirement files in `docs/superpowers/iterations/requirements/` and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus ordered follow-on iterations. Runs citation and scope review via PAR before committing the roadmap.
 
 ## When to Use
 
@@ -21,7 +21,7 @@ All scripts referenced below live in this skill's `scripts/` directory, next to 
 
 ### 1. Read the backlog
 
-Read `docs/superpowers/iterations/requirements-index.md` — epic summaries and story titles first, then dip into ACs when selecting.
+Read the epic files in `docs/superpowers/iterations/requirements/` — scan epic headers and story titles first, then dip into specific epic files for ACs when selecting.
 
 ### 2. Define the walking skeleton (ITER-0000)
 
@@ -33,7 +33,7 @@ Each iteration is a sprint's worth of cohesive work. Iteration granularity is ju
 
 ### 4. Run citation check
 
-Run: `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements-index.md`
+Run: `python3 "scripts/check_citations.py" docs/superpowers/iterations/roadmap.md docs/superpowers/iterations/requirements/`
 
 Every iteration must cite only valid STORY-IDs from the index.
 

@@ -13,7 +13,7 @@ You are reviewing the scope of an upcoming iteration BEFORE any code is written.
 
 ## Stories in Scope
 
-[For each committed story, paste the full story card from requirements-index.md]
+[For each committed story, paste the full story card from the requirements directory]
 
 ## Next 3 Pending Iterations
 
@@ -24,7 +24,7 @@ You are reviewing the scope of an upcoming iteration BEFORE any code is written.
 ### 1. Citation Integrity
 
 For every story committed to this iteration:
-- Does it cite a valid STORY-NNNN that exists in requirements-index.md?
+- Does it cite a valid STORY-NNNN that exists in the requirements directory?
 - Does each story's acceptance criteria match what the source spec says?
 (Note: the mechanical citation check via check_citations.py has already run.
 Your job is the SEMANTIC check — do the stories actually mean what the spec says?)
