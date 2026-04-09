@@ -1,13 +1,13 @@
 ---
 name: extracting-requirements
-description: Use when starting an iterative-development run on human spec collateral — reads the spec, produces a structured requirements-index.md containing story cards and epics with stable IDs.
+description: Use when starting an iterative-development run on human spec collateral — reads the spec, produces per-epic requirement files containing story cards with stable IDs.
 ---
 
 # Extracting Requirements
 
 ## Overview
 
-Reads arbitrary human spec collateral (one file, a directory, or a large prose dump) and produces `docs/superpowers/iterations/requirements-index.md` — the plugin's internal backlog of story cards and epics with stable global IDs.
+Reads arbitrary human spec collateral (one file, a directory, or a large prose dump) and produces per-epic requirement files in `docs/superpowers/iterations/requirements/` — the plugin's internal backlog of story cards and epics with stable global IDs. Each epic gets its own file (e.g., `EPIC-001.md`).
 
 Uses a chunking + parallel-dispatch + aggregation pipeline so that no single agent holds the entire spec in context. Handles specs from a single page up to ~100K tokens across dozens of files.
 
@@ -47,7 +47,7 @@ For each chunk (or batch of small chunks), dispatch an extraction subagent using
 Run the aggregation script on all extracted story JSONs:
 
 ```bash
-python3 "scripts/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
+python3 "scripts/aggregate_stories.py" -o docs/superpowers/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
 The script:
@@ -55,7 +55,7 @@ The script:
 - Deduplicates by exact title match (merges sources)
 - Groups stories into epics by `epic_theme`
 - Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
-- Outputs formatted `requirements-index.md`
+- Outputs per-epic files to the output directory
 
 ### 4. PAR omission review
 
@@ -75,7 +75,7 @@ This pass is required, not optional. Extraction subagents optimize for what they
 Run the aggregation script on all extracted story JSONs (including any stories added by the omission review):
 
 ```bash
-python3 "scripts/aggregate_stories.py" <json-file-1> <json-file-2> ... > docs/superpowers/iterations/requirements-index.md
+python3 "scripts/aggregate_stories.py" -o docs/superpowers/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
 The script:
@@ -83,7 +83,7 @@ The script:
 - Deduplicates by exact title match (merges sources)
 - Groups stories into epics by `epic_theme`
 - Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
-- Outputs formatted `requirements-index.md`
+- Outputs per-epic files to the output directory
 
 ### 6. Consolidate epics
 
@@ -91,7 +91,7 @@ The aggregation script groups by exact `epic_theme` string. Since extraction sub
 
 After aggregation, review the epic list and consolidate:
 
-1. Extract the epic names: `grep "^## EPIC-" docs/superpowers/iterations/requirements-index.md`
+1. List the epic files: `ls docs/superpowers/iterations/requirements/EPIC-*.md`
 2. Identify groups that should merge:
    - "Parent - Child" variants (e.g., "Recording Pipeline - State Machine" → "Recording Pipeline")
    - Near-synonyms (e.g., "Audio Capture" + "Audio Capture and Encoding" + "Audio Recording")
@@ -127,7 +127,7 @@ For each chunk from the inventory (step 1):
 ### 8. Validate
 
 ```bash
-python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements-index.md
+python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements/
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
@@ -135,8 +135,8 @@ If validation fails, inspect the output, fix formatting issues, and re-validate.
 ### 9. Commit
 
 ```bash
-git add docs/superpowers/iterations/requirements-index.md
-git commit -m "docs: add requirements-index.md extracted from spec"
+git add docs/superpowers/iterations/requirements/
+git commit -m "docs: add per-epic requirements extracted from spec"
 ```
 
 ## Quick Reference
@@ -146,7 +146,7 @@ git commit -m "docs: add requirements-index.md extracted from spec"
 | Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
 | Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
 | Omission review | PAR (source text vs. extracted stories) | chunks + stories | Missing requirements |
-| Aggregate | `scripts/aggregate_stories.py` | JSON files | `requirements-index.md` (stdout) |
+| Aggregate | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files in output dir |
 | Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
 | Coverage ledger | Map every chunk → story IDs + classification | chunk list, stories | Gap/covered/non-normative per chunk |
 | Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |

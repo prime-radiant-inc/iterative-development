@@ -27,12 +27,12 @@ In a Claude Code session running in `/tmp/walking-skeleton-dogfood`, ask Claude 
 
 Expected high-level flow:
 1. Claude invokes `iterative-development` (orchestrator)
-2. Orchestrator invokes `extracting-requirements` → creates `docs/superpowers/iterations/requirements-index.md`
+2. Orchestrator invokes `extracting-requirements` → creates per-epic files in `docs/superpowers/iterations/requirements/`
 3. Orchestrator invokes `scoping-the-simplest-core` → creates `docs/superpowers/iterations/roadmap.md`
 4. Orchestrator enters the iteration loop:
    - Invokes `running-an-iteration` → picks ITER-0000, decomposes into tasks
    - `running-an-iteration` dispatches `implementing-tasks` → writes TDD-style code that implements greet
-   - `running-an-iteration` updates `requirements-index.md`, `roadmap.md`, appends to `iteration-log.md`
+   - `running-an-iteration` updates epic files in `requirements/`, `roadmap.md`, appends to `iteration-log.md`
    - Orchestrator invokes `auditing-progress` → confirms ACs pass
    - Roadmap is empty + audit clean → orchestrator terminates
 
@@ -41,7 +41,7 @@ Expected high-level flow:
 Check that the following files exist and validate:
 
 ```bash
-python3 <plugin-repo>/skills/extracting-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements-index.md
+python3 <plugin-repo>/skills/extracting-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements/
 python3 <plugin-repo>/skills/scoping-the-simplest-core/scripts/validate_roadmap.py docs/superpowers/iterations/roadmap.md
 python3 <plugin-repo>/skills/running-an-iteration/scripts/validate_iteration_log.py docs/superpowers/iterations/iteration-log.md
 ```
