@@ -170,3 +170,36 @@ Extraction subagents produce:
 ```
 
 For journey scenarios, `steps` is the ordered sequence. For surface scenarios, `steps` has one entry (the action + observables).
+
+## Test Infrastructure Checklist
+
+Before the walking skeleton can pass its first journey scenario, the project needs a test harness. The walking skeleton's first task should be designing and building this harness. Answer these questions before writing harness code:
+
+**Launch and teardown:**
+- How does the test start the system under test?
+- How does it shut it down cleanly after each scenario?
+- Can scenarios run independently (no shared state between runs)?
+
+**Input simulation:**
+- How does the test simulate user actions (keyboard, mouse, voice, CLI, HTTP)?
+- Can inputs be scripted and replayed deterministically?
+
+**State observation:**
+- How does the test observe the system's output or state changes?
+- Can it query UI state, file system, database, or API responses?
+- What is the observation latency (immediate, polling, event-driven)?
+
+**External dependencies:**
+- Does the system depend on OS services, network, hardware, or third-party APIs?
+- Which dependencies can be substituted with fixtures in test?
+- Which require real resources and why?
+
+**Fixture strategy:**
+- What test data does each scenario need (audio files, seed databases, config files)?
+- Where do fixtures live and how are they versioned?
+
+**Manual residuals:**
+- What can't be automated and why?
+- Is the manual portion documented as an explicit debt marker?
+
+Document the answers in a test infrastructure section of the project's docs. The harness design becomes a reusable asset — later iterations extend it, they don't rebuild it.

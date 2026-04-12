@@ -36,6 +36,8 @@ The walking skeleton must also produce:
 - The first executable behavior harness (the E2E test infrastructure)
 - A small sentinel corpus that can be rerun every iteration
 
+**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Use the test infrastructure checklist in `skills/shared/behavior-evidence-formats.md` to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
+
 Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists AND have at least one passing journey scenario that proves the demo works."
 
 ### 3. Order remaining stories into iterations
