@@ -108,11 +108,15 @@ Same as before: review the epic list, merge near-duplicates, re-run aggregation.
 
 ### 7. Back-link scenarios to stories
 
-After both aggregations complete, update the per-epic story files with scenario references. For each story whose ACs reference scenarios:
+After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
-1. Read the scenario file to find SCENARIO/JOURNEY IDs
-2. Match scenarios to stories via `owning_stories`
-3. Append `scenario:SCENARIO-NNNN` or `scenario:JOURNEY-NNNN` to the relevant AC lines in the story files
+```bash
+python3 "scripts/backlink_scenarios.py" \
+  docs/superpowers/iterations/behavior-scenarios.md \
+  docs/superpowers/iterations/requirements/
+```
+
+The script reads scenario → owning-story mappings from `behavior-scenarios.md` and appends `scenario:SCENARIO-NNNN` or `scenario:JOURNEY-NNNN` to AC lines in the epic files that have observable behavioral impact. AC lines that already have scenario refs are skipped.
 
 This creates the bidirectional link: stories → scenarios (via AC lines) and scenarios → stories (via owning_stories field).
 
@@ -182,11 +186,11 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 | Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
 | Aggregate stories | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files with proof obligations |
 | Aggregate scenarios | `scripts/aggregate_scenarios.py -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |
-| Back-link | Manual or scripted | scenarios + stories | Updated AC lines with scenario refs |
+| Back-link | `scripts/backlink_scenarios.py` | scenarios + stories | Updated AC lines with scenario refs |
 | Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
 | Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
 | Validate | `scripts/validate_requirements_index.py` + `scripts/validate_scenarios.py` | .md files | OK or errors |
 
 ## Deferred to later plans
 
-Hierarchical reduce (specs > 1M tokens), huge-spec decomposition, incremental re-extraction, automated back-linking script.
+Hierarchical reduce (specs > 1M tokens), huge-spec decomposition, incremental re-extraction.
