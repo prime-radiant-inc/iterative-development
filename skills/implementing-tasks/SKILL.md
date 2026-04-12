@@ -19,11 +19,16 @@ For each task in the provided list:
 
 ### 1. Dispatch implementer
 
-Using the template in `implementer-subagent-prompt.md`, dispatch a single implementer subagent with the full task description and context.
+Using the template in `implementer-subagent-prompt.md`, dispatch a single implementer subagent with:
+- The full task description and context
+- The proof obligations for each observable AC in the task's stories
+- The list of existing scenarios that may be impacted
+
+The implementer MUST complete a pre-flight mapping (AC → proof seam → scenario) before writing code. If the implementer skips the pre-flight, re-dispatch with explicit instructions to complete it first.
 
 ### 2. Handle implementer status
 
-- **DONE:** proceed to spec-compliance review (step 3)
+- **DONE:** proceed to spec-compliance review (step 3). Verify the implementer's report includes pre-flight mapping and scenario updates.
 - **DONE_WITH_CONCERNS:** read the concerns. If about correctness/scope, address before review. If observations, note and proceed.
 - **NEEDS_CONTEXT:** provide the missing context and re-dispatch
 - **BLOCKED:** assess: context problem → re-dispatch with context; too hard → re-dispatch with more capable model; task too large → break into smaller pieces; plan wrong → escalate to caller
@@ -33,6 +38,7 @@ Using the template in `implementer-subagent-prompt.md`, dispatch a single implem
 Following `skills/shared/parallel-adversarial-review.md`:
 
 1. Build spec-compliance prompt using `spec-compliance-reviewer-prompt.md`
+   - Include the proof obligations and the implementer's evidence claims
 2. Wrap in PAR competitive framing from `skills/shared/par-reviewer-wrapper.md`
 3. Dispatch TWO spec-compliance reviewers in parallel
 4. Aggregate findings (PAR rules: union of findings, severity = take worst)
@@ -40,7 +46,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
    - Send aggregated issues back to the implementer subagent (same subagent, via SendMessage)
    - Implementer fixes
    - Re-dispatch fresh PAR spec-compliance pair
-   - Repeat until ✅ spec compliant
+   - Repeat until ✅ spec compliant with adequate evidence
 6. Only proceed to Stage 2 after Stage 1 is ✅
 
 ### 4. PAR code-quality review (Stage 2)
@@ -49,6 +55,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 1. Build code-quality prompt using `code-quality-reviewer-prompt.md`
    - Include the next 3 pending roadmap iterations for the boxing-in check
+   - Include the implementer's corpus contribution for quality review
 2. Wrap in PAR competitive framing
 3. Dispatch TWO code-quality reviewers in parallel
 4. Aggregate findings
@@ -62,7 +69,10 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 Record the task as done. Move to the next task.
 
-After all tasks complete, return a per-task result list to the caller.
+After all tasks complete, return a per-task result list to the caller, including:
+- Per-task status
+- Scenarios added or updated per task
+- Evidence commands per task
 
 ## Model Selection
 
