@@ -89,10 +89,22 @@ After all tasks complete, run:
 
 If any impacted or sentinel scenario fails that passed at baseline (step 3), this iteration introduced a regression. Create a fix task and re-dispatch to `implementing-tasks`.
 
-### 9. Wrap up
+### 9. Resolve cross-iteration TODOs
+
+Grep the codebase for `TODO(ITER-<current>)` markers — these are interface stubs that earlier iterations created expecting THIS iteration to provide the real implementation.
+
+For each marker found:
+1. Verify the real implementation now exists (not still a stub/NoOp)
+2. If resolved: remove the TODO comment
+3. If NOT resolved: the iteration is incomplete — add a fix task and re-dispatch
+
+This step is a hard gate. An iteration that leaves its own TODO markers in the code is not done.
+
+### 10. Wrap up
 
 - Verify all iteration stories' ACs pass (sanity check before audit)
 - Verify all proof obligations for observable ACs have corresponding scenario evidence
+- Verify no `TODO(ITER-<current>)` markers remain in the codebase (step 9)
 - Mark stories `done:ITER-NNNN` in the relevant epic files under `requirements/`
 - Update scenario automation status and execution commands in `behavior-scenarios.md`
 - Update the behavior corpus index in `behavior-corpus.md`
@@ -113,6 +125,7 @@ If any impacted or sentinel scenario fails that passed at baseline (step 3), thi
 | Scope review | PAR + `scope-reviewer-prompt.md` | Semantic: scope, scenarios, splitting, boxing-in |
 | Task execution | `implementing-tasks` | TDD code + evidence implementation |
 | Post-iteration runs | Run impacted + sentinel scenarios | Catch regressions |
+| TODO resolution | `grep -rn 'TODO(ITER-<current>)'` | Cross-iteration stubs resolved |
 | Wrap up | `scripts/validate_iteration_log.py` | Artifact validation |
 
 ## References
