@@ -85,8 +85,10 @@ The final question is: "Can the system point to passing behavior evidence for ev
 
 ### Resume (re-invocation with existing state)
 
-All process state lives in three artifact files:
-- `docs/superpowers/iterations/requirements/` (backlog with story status)
+All process state lives in artifact files:
+- `docs/superpowers/iterations/requirements/` (backlog with story status and proof obligations)
+- `docs/superpowers/iterations/behavior-scenarios.md` (scenario cards with stable IDs)
+- `docs/superpowers/iterations/behavior-corpus.md` (execution index)
 - `docs/superpowers/iterations/roadmap.md` (iteration plan with status)
 - `docs/superpowers/iterations/iteration-log.md` (completed iteration history)
 
@@ -112,6 +114,26 @@ The loop runs without human intervention. The only way the human injects new inf
 - The orchestrator does not poll the filesystem for spec changes
 - The orchestrator does not ask "anything to change?" between iterations
 - Human presence is not required at iteration boundaries
+
+## Progress Reporting
+
+The autonomous loop may run for hours. Two progress mechanisms ensure visibility without requiring interruption:
+
+**1. Progress file:** Write `docs/superpowers/iterations/progress.md` at each phase transition:
+
+```markdown
+# Progress
+
+**Phase:** implementing ITER-0003
+**Task:** 4/7 (CleanupPipeline integration)
+**Iterations:** 3/18 done, 15 pending
+**Sentinel corpus:** 10/10 passing
+**Last event:** 2026-04-11T14:23:00Z — Task 3 committed
+```
+
+Update this file at: iteration start, each task completion, iteration wrap-up, audit start/end. Overwrite (not append) — it's a snapshot of current state, not a log.
+
+**2. Git log:** Every task produces a commit. The commit history is a detailed progress trail. A human can check `git log --oneline` for fine-grained status without interrupting the loop.
 
 ## Skill Precedence
 
@@ -151,6 +173,7 @@ All plugin artifacts live in `docs/superpowers/iterations/`. Never modify the hu
 | `behavior-corpus.md` | Execution index: scenario → seam → cadence → command |
 | `roadmap.md` | Sprint plan: ordered iterations with impacted scenarios |
 | `iteration-log.md` | Sprint history: what each iteration delivered + scenarios added |
+| `progress.md` | Live snapshot: current phase, task, iteration counts, sentinel status |
 
 ## Quality Gates
 
