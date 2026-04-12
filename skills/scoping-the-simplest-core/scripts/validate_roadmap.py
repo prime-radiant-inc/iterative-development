@@ -5,7 +5,7 @@ Usage: validate_roadmap.py <file>
 
 Checks:
 - Contains a "Walking skeleton (ITER-0000)" section
-- Walking skeleton section has Intent, Status, Stories committed
+- Walking skeleton section has Intent, Status, Stories committed, Journey scenario
 - Contains an "Iteration list" section
 
 Exit code: 0 on success, 1 on validation failure, 2 on invocation error.
@@ -29,7 +29,7 @@ def validate_roadmap(content: str) -> list[str]:
         next_h2 = content.find("\n## ", ws_start + 1)
         ws_end = next_h2 if next_h2 != -1 else len(content)
         ws_section = content[ws_start:ws_end]
-        for required in ("**Intent:**", "**Status:**", "**Stories committed:**"):
+        for required in ("**Intent:**", "**Status:**", "**Stories committed:**", "**Journey scenario:**"):
             if required not in ws_section:
                 errors.append(f"walking skeleton: missing required field {required}")
 
