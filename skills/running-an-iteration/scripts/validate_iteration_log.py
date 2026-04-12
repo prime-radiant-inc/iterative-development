@@ -5,7 +5,7 @@ Usage: validate_iteration_log.py <file>
 
 Checks:
 - Contains at least one ITER-NNNN section
-- Each iteration section has Completed, Stories delivered, Tasks executed, Summary
+- Each iteration section has Completed, Stories delivered, Tasks executed, Summary, Scenarios
 
 Exit code: 0 on success, 1 on validation failure, 2 on invocation error.
 """
@@ -32,7 +32,7 @@ def validate_iteration_log(content: str) -> list[str]:
         section = content[start:end]
 
         for required in ("**Completed:**", "**Stories delivered:**",
-                         "**Tasks executed:**", "**Summary:**"):
+                         "**Tasks executed:**", "**Scenarios:**", "**Summary:**"):
             if required not in section:
                 errors.append(f"{iter_id}: missing required field {required}")
 

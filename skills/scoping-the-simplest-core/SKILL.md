@@ -1,13 +1,13 @@
 ---
 name: scoping-the-simplest-core
-description: Use when turning extracted requirements into a roadmap — selects the walking skeleton iteration and orders the remaining work into follow-on iterations that can each be delivered as a single sprint.
+description: Use when turning extracted requirements into a roadmap — selects the walking skeleton iteration with its first journey scenario, orders remaining work into follow-on iterations, and applies story splitting when ACs have different dependency profiles.
 ---
 
 # Scoping the Simplest Core
 
 ## Overview
 
-Reads the per-epic requirement files in `docs/superpowers/iterations/requirements/` and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus ordered follow-on iterations. Runs citation and scope review via PAR before committing the roadmap.
+Reads the per-epic requirement files in `docs/superpowers/iterations/requirements/` and `docs/superpowers/iterations/behavior-scenarios.md`, and produces `docs/superpowers/iterations/roadmap.md`: a walking-skeleton iteration (ITER-0000) plus ordered follow-on iterations. The walking skeleton must produce the first runnable journey scenario. Runs citation and scope review via PAR before committing the roadmap.
 
 ## When to Use
 
@@ -23,13 +23,38 @@ All scripts referenced below live in this skill's `scripts/` directory, next to 
 
 Read the epic files in `docs/superpowers/iterations/requirements/` — scan epic headers and story titles first, then dip into specific epic files for ACs when selecting.
 
+Also read `docs/superpowers/iterations/behavior-scenarios.md` to understand which scenarios exist and which stories they cover.
+
 ### 2. Define the walking skeleton (ITER-0000)
 
-Select a small cohesive set of stories from as many distinct epics as possible. The walking skeleton should prove the end-to-end shape of the product works. Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists."
+Select a small cohesive set of stories from as many distinct epics as possible. The walking skeleton should prove the end-to-end shape of the product works.
+
+**Scenario requirement:** the walking skeleton MUST include stories that close at least ONE journey scenario chain. Prefer the core product journey (e.g., "normal dictation" over "debug investigation"). The skeleton is not done until that journey scenario is runnable as an automated or scripted-reproducible test.
+
+The walking skeleton must also produce:
+- The first stable scenario IDs
+- The first executable behavior harness (the E2E test infrastructure)
+- A small sentinel corpus that can be rerun every iteration
+
+**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Use the test infrastructure checklist in `skills/shared/behavior-evidence-formats.md` to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
+
+Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists AND have at least one passing journey scenario that proves the demo works."
 
 ### 3. Order remaining stories into iterations
 
 Each iteration is a sprint's worth of cohesive work. Iteration granularity is judgment-based — no hardcoded story count.
+
+**Story splitting rule:** when assigning stories to iterations, check each story's ACs for dependency profiles. If a story has ACs where:
+- Some ACs can be satisfied in iteration N (their dependencies exist)
+- Other ACs require subsystems from iteration N+M (their dependencies don't exist yet)
+
+Then SPLIT the story:
+1. Create a version with only the satisfiable ACs for iteration N
+2. Create a version with the remaining ACs for iteration N+M
+3. Update the requirements index with both versions (append `a`/`b` to the story ID)
+4. Update scenario refs in both versions
+
+**Why this matters:** moving a whole story to a later iteration because one AC has a late dependency causes the other ACs to be re-interpreted through the receiving iteration's theme, and they get silently dropped.
 
 ### 4. Run citation check
 
@@ -45,23 +70,27 @@ Following `skills/shared/parallel-adversarial-review.md`:
 2. Wrap in PAR competitive framing
 3. Dispatch paired scope reviewers focused on:
    - Is ITER-0000 really the thinnest possible walking skeleton?
+   - Does ITER-0000 close at least one journey scenario?
    - Could anything be deferred from ITER-0000 to a follow-on?
    - Does ITER-0000's design box in any follow-on iteration?
    - Are any stories over-broad (mixing skeleton-level concerns with later integrations)?
-4. **If stories need splitting:** the scope review may reveal that extracted stories are too broad for a walking skeleton — e.g., a story that mixes a thin shell implementation with a full subsystem integration. When this happens, split the story: create a skeleton-scoped version for ITER-0000 and defer the full version to a later iteration. Update the requirements index with the split stories before revising the roadmap.
+   - **Are there stories with heterogeneous-dependency ACs that should be split?**
+   - **Does any iteration leave observable behavior without planned scenario coverage?**
+4. **If stories need splitting:** apply the splitting rule from step 3, update requirements, re-scope.
 5. If REVISE recommended: adjust and re-review until APPROVE
 
 ### 6. Write and validate roadmap
 
 Write the result to `docs/superpowers/iterations/roadmap.md` using this format:
 
-```markdown
+```
 # Roadmap
 
 ## Walking skeleton (ITER-0000)
 
 **Intent:** <one-line description of the thinnest end-to-end slice>
 **Design rationale:** <why these stories, what they prove together>
+**Journey scenario:** <JOURNEY-NNNN that the skeleton must pass>
 **Stories committed:**
 - STORY-NNNN (EPIC-NNN)
 - ...
@@ -74,18 +103,19 @@ Write the result to `docs/superpowers/iterations/roadmap.md` using this format:
 **Stories:** STORY-NNNN, STORY-NNNN, ...
 **Rationale:** <why these stories belong together>
 **Status:** pending
+**Impacted scenarios:** <SCENARIO-NNNN, JOURNEY-NNNN that this iteration touches>
 **Look-ahead check:** <does this block or get blocked by neighbors?>
 ```
 
 Run: `python3 "scripts/validate_roadmap.py" docs/superpowers/iterations/roadmap.md`
 
-**Note:** The validator checks format only (required headings and fields). It does not validate iteration structure, status values, or whether the walking skeleton is actually minimal. The PAR scope review is the real structural gate — the validator just catches formatting mistakes.
+**Note:** The validator checks format only. The PAR scope review is the real structural gate.
 
 ### 7. Commit
 
 ```bash
 git add docs/superpowers/iterations/roadmap.md
-git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
+git commit -m "docs: add roadmap — walking skeleton with journey scenario + iteration plan"
 ```
 
 ## Quick Reference
@@ -93,12 +123,13 @@ git commit -m "docs: add roadmap.md — walking skeleton + iteration plan"
 | Step | Tool/Skill | Purpose |
 |---|---|---|
 | Citation check | `scripts/check_citations.py` | All cited stories exist |
-| Scope review | PAR + scope reviewer prompt | Walking skeleton is minimal, no boxing-in, stories not over-broad |
-| Story splitting | Manual (if PAR finds broad stories) | Split skeleton-scope from full-scope, update backlog |
-| Validate | `scripts/validate_roadmap.py` | Format check only (PAR is the real gate) |
+| Scope review | PAR + scope reviewer prompt | Walking skeleton minimal, journey scenario included, story splitting applied, no boxing-in |
+| Story splitting | Manual (if PAR or dependency analysis finds heterogeneous ACs) | Split stories by dependency profile |
+| Validate | `scripts/validate_roadmap.py` | Format check only |
 
 ## References
 
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
+- `skills/shared/behavior-evidence-formats.md` — scenario and proof obligation formats
 - `skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused)
 - `scripts/check_citations.py` — mechanical citation check

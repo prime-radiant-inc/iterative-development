@@ -105,7 +105,20 @@ def format_epic_file(epic_id: str, theme: str, stories: list[dict]) -> str:
         lines.append("")
         lines.append("**Acceptance criteria:**")
         for ac in story.get("acceptance_criteria", []):
-            lines.append(f"- {ac}")
+            if isinstance(ac, dict):
+                ac_text = ac.get("text", "")
+                ac_id = ac.get("id", "")
+                impact = ac.get("behavioral_impact", "")
+                seam = ac.get("proof_seam", "")
+                line = f"- {ac_id}: {ac_text}"
+                if impact:
+                    line += f" · impact:`{impact}`"
+                if seam:
+                    line += f" · seam:`{seam}`"
+                lines.append(line)
+            else:
+                # Legacy plain-string AC format
+                lines.append(f"- {ac}")
         lines.append("")
         lines.append("**Sources:**")
         for src in story.get("sources", []):

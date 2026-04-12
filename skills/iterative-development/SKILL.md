@@ -1,13 +1,13 @@
 ---
 name: iterative-development
-description: Use when implementing a project with a large, comprehensive, or ambiguous spec that would overwhelm the writing-plans → subagent-driven-development flow — extracts requirements, defines a walking skeleton, then loops through audited sprints autonomously.
+description: Use when implementing a project with a large, comprehensive, or ambiguous spec — extracts requirements with proof obligations, defines a walking skeleton with its first journey scenario, then loops through audited sprints that continuously build a behavior evidence corpus. Completion means passing evidence, not just finished stories.
 ---
 
 # Iterative Development
 
 ## Overview
 
-Orchestrator for the iterative-development plugin. Drives the full autonomous lifecycle: extract requirements from human spec collateral, define a walking skeleton, loop through audited sprints until an auditor confirms the product matches the backlog. Every evaluative gate uses parallel adversarial review (PAR).
+Orchestrator for the iterative-development plugin. Drives the full autonomous lifecycle: extract requirements with proof obligations and behavior scenarios from human spec collateral, define a walking skeleton that passes its first journey scenario, then loop through audited sprints that continuously build a reusable behavior evidence corpus. Completion means the product has passing behavior evidence at the correct seam for every externally observable requirement — not just that stories are marked done. Every evaluative gate uses parallel adversarial review (PAR).
 
 This is an alternative to `superpowers:writing-plans → superpowers:subagent-driven-development` for projects where the upfront-planning approach would lose the plot.
 
@@ -26,12 +26,17 @@ Do NOT use for small, bounded projects — `superpowers:writing-plans → superp
 
 1. Check `docs/superpowers/iterations/` for existing state. If found, skip to **Resume** below.
 2. Invoke `extracting-requirements` on the human-provided spec path.
-   - Chunks the spec, dispatches parallel extraction subagents, aggregates results
-   - Produces `docs/superpowers/iterations/requirements/`
+   - Chunks the spec, classifies by taxonomy (journeys → E2E, domains → integration, etc.)
+   - Dispatches parallel extraction subagents that produce stories with proof obligations AND behavior scenarios
+   - Aggregates stories into per-epic files, scenarios into behavior-scenarios.md
+   - Builds coverage ledger with both story AND scenario coverage
+   - Produces `docs/superpowers/iterations/requirements/`, `docs/superpowers/iterations/behavior-scenarios.md`, `docs/superpowers/iterations/behavior-corpus.md`
 3. Invoke `scoping-the-simplest-core` on the resulting backlog.
    - Defines the walking skeleton iteration (ITER-0000) + ordered follow-on iterations
    - Runs citation check + PAR scope review
    - Produces `docs/superpowers/iterations/roadmap.md`
+   - Walking skeleton must close at least one journey scenario (not just compile)
+   - Applies story splitting when stories have heterogeneous-dependency ACs
 
 ### Main loop
 
@@ -41,36 +46,49 @@ while True:
 
     if not roadmap has pending iterations:
         if last audit was clean:
-            run final spec-surface audit (see below)
-            if spec audit clean:
+            run final behavior-evidence audit (see below)
+            if behavior audit clean:
                 break  # done
-            # else: spec audit found uncovered surfaces, new iterations added
+            # else: audit found uncovered surfaces or weak evidence, new iterations added
         # else: audit found gaps, new iterations were added, continue
 
     run next iteration:
-        - running-an-iteration (scope review → decompose → implementing-tasks → wrap up)
+        - running-an-iteration (sentinel baseline → scope review → decompose code + evidence tasks → implementing-tasks → impacted + sentinel scenario runs → wrap up)
     
     audit:
-        - auditing-progress (PAR paired auditors, two-tier: deep new + sweep whole)
+        - auditing-progress (PAR paired auditors, three-tier: deep evidence + impacted behavior + sentinel corpus)
         - if gaps: append to backlog, revise roadmap, continue
         - if clean: mark last_audit_clean, continue
 ```
 
-### Final spec-surface audit
+### Final behavior-evidence audit
 
-Before declaring the project complete, verify that the product covers the spec — not just that all stories are marked done:
+Before declaring the project complete, verify that the product has adequate behavior evidence — not just that all stories are marked done:
 
-1. List every major user-facing surface from the original spec (settings panes, UI flows, CLI commands, etc.)
-2. For each surface, verify that corresponding stories exist AND are implemented (not just extracted)
-3. Flag any spec surface with no corresponding story or with placeholder-only implementation
-4. If gaps found: create new stories and iterations, continue the loop
+1. List every major user-facing surface from the original spec (settings panes, UI flows, CLI commands, journeys, etc.)
+2. For each surface, verify that:
+   - Corresponding stories exist AND are implemented
+   - Corresponding scenarios exist AND have passing evidence at the correct seam
+   - Journey scenarios that cross multiple surfaces are passing E2E
+3. Check the behavior corpus index for completeness:
+   - Every journey spec file has at least one JOURNEY-NNNN scenario
+   - Every scenario has a non-TBD execution command
+   - All sentinel scenarios pass
+4. Flag any surface with:
+   - No corresponding story (extraction under-scoped)
+   - No corresponding scenario (evidence gap)
+   - Evidence at a weaker seam than the requirement demands
+   - Manual-residual scenarios that could be automated
+5. If gaps found: create new stories/scenarios/iterations, continue the loop
 
-This catches the failure mode where extraction under-scoped the project — stories that were never created can't be caught by story-level audits.
+The final question is: "Can the system point to passing behavior evidence for every externally observable requirement the spec describes?" Not: "Are the stories done?"
 
 ### Resume (re-invocation with existing state)
 
-All process state lives in three artifact files:
-- `docs/superpowers/iterations/requirements/` (backlog with story status)
+All process state lives in artifact files:
+- `docs/superpowers/iterations/requirements/` (backlog with story status and proof obligations)
+- `docs/superpowers/iterations/behavior-scenarios.md` (scenario cards with stable IDs)
+- `docs/superpowers/iterations/behavior-corpus.md` (execution index)
 - `docs/superpowers/iterations/roadmap.md` (iteration plan with status)
 - `docs/superpowers/iterations/iteration-log.md` (completed iteration history)
 
@@ -96,6 +114,26 @@ The loop runs without human intervention. The only way the human injects new inf
 - The orchestrator does not poll the filesystem for spec changes
 - The orchestrator does not ask "anything to change?" between iterations
 - Human presence is not required at iteration boundaries
+
+## Progress Reporting
+
+The autonomous loop may run for hours. Two progress mechanisms ensure visibility without requiring interruption:
+
+**1. Progress file:** Write `docs/superpowers/iterations/progress.md` at each phase transition:
+
+```markdown
+# Progress
+
+**Phase:** implementing ITER-0003
+**Task:** 4/7 (CleanupPipeline integration)
+**Iterations:** 3/18 done, 15 pending
+**Sentinel corpus:** 10/10 passing
+**Last event:** 2026-04-11T14:23:00Z — Task 3 committed
+```
+
+Update this file at: iteration start, each task completion, iteration wrap-up, audit start/end. Overwrite (not append) — it's a snapshot of current state, not a log.
+
+**2. Git log:** Every task produces a commit. The commit history is a detailed progress trail. A human can check `git log --oneline` for fine-grained status without interrupting the loop.
 
 ## Skill Precedence
 
@@ -130,16 +168,21 @@ All plugin artifacts live in `docs/superpowers/iterations/`. Never modify the hu
 
 | File | Purpose |
 |---|---|
-| `requirements/` | Backlog: story cards + epics with stable IDs |
-| `roadmap.md` | Sprint plan: ordered iterations with status |
-| `iteration-log.md` | Sprint history: what each iteration delivered |
+| `requirements/` | Backlog: story cards + epics with stable IDs and proof obligations |
+| `behavior-scenarios.md` | Behavior contracts: reusable scenario cards with stable IDs |
+| `behavior-corpus.md` | Execution index: scenario → seam → cadence → command |
+| `roadmap.md` | Sprint plan: ordered iterations with impacted scenarios |
+| `iteration-log.md` | Sprint history: what each iteration delivered + scenarios added |
+| `progress.md` | Live snapshot: current phase, task, iteration counts, sentinel status |
 
 ## Quality Gates
 
 Every evaluative gate uses parallel adversarial review (PAR):
-- Pre-iteration scope review (citation + scope-creep + boxing-in look-ahead)
-- Per-task spec-compliance review
-- Per-task code-quality review with boxing-in check
-- Per-sprint audit (deep new work + sweep whole product)
+- Pre-iteration scope review (citation + scope-creep + boxing-in + scenario coverage + story splitting)
+- Pre-iteration sentinel corpus baseline
+- Per-task spec-compliance review with evidence quality check
+- Per-task code-quality review with boxing-in + corpus contribution check
+- Post-iteration impacted + sentinel scenario runs
+- Per-sprint audit (deep evidence + impacted behavior + sentinel corpus)
 
 See `skills/shared/parallel-adversarial-review.md` for PAR methodology.

@@ -1,23 +1,38 @@
 ---
 name: extracting-requirements
-description: Use when starting an iterative-development run on human spec collateral — reads the spec, produces per-epic requirement files containing story cards with stable IDs.
+description: Use when starting an iterative-development run on human spec collateral — reads the spec, produces per-epic requirement files with proof obligations and behavior scenario cards with stable IDs.
 ---
 
 # Extracting Requirements
 
 ## Overview
 
-Reads arbitrary human spec collateral (one file, a directory, or a large prose dump) and produces per-epic requirement files in `docs/superpowers/iterations/requirements/` — the plugin's internal backlog of story cards and epics with stable global IDs. Each epic gets its own file (e.g., `EPIC-001.md`).
+Reads arbitrary human spec collateral and produces two artifact sets:
+1. **Per-epic requirement files** in `docs/superpowers/iterations/requirements/` — story cards with proof obligations per AC
+2. **Behavior scenarios** in `docs/superpowers/iterations/behavior-scenarios.md` — reusable observable-behavior contracts with stable IDs
 
 Uses a chunking + parallel-dispatch + aggregation pipeline so that no single agent holds the entire spec in context. Handles specs from a single page up to ~100K tokens across dozens of files.
 
 ## When to Use
 
-Invoked by `iterative-development` during bootstrap, or standalone when you need to regenerate the requirements index from human spec collateral.
+Invoked by `iterative-development` during bootstrap, or standalone when you need to regenerate requirements from human spec collateral.
 
 ## Script Location
 
 All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
+
+## Key Concept: Spec Taxonomy
+
+The spec directory structure drives proof seam classification. See `skills/shared/behavior-evidence-formats.md` for the full taxonomy. Summary:
+
+| Spec directory | Default proof seam |
+|---|---|
+| `test-vectors/` | unit |
+| `contracts/` | integration |
+| `domains/` | integration or app-level |
+| `journeys/` | e2e |
+
+Extraction subagents use the appropriate prompt variant based on source file location.
 
 ## Pipeline
 
@@ -31,112 +46,137 @@ python3 "scripts/chunk_spec.py" <spec-path>
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
 
+**Classify each chunk by spec taxonomy:** note whether the source file is under `journeys/`, `contracts/`, `domains/`, or `test-vectors/`. This determines which extraction prompt variant to use.
+
 ### 2. Dispatch extraction subagents
 
-For each chunk (or batch of small chunks), dispatch an extraction subagent using the template in `extraction-subagent-prompt.md`. Pass the chunk content inline — do NOT make the subagent read the file.
+For each chunk (or batch of small chunks), dispatch an extraction subagent using the appropriate template from `extraction-subagent-prompt.md`:
+
+- Chunks from `journeys/` → use the **Journey Extraction** prompt variant
+- All other chunks → use the **Standard Extraction** prompt variant
+
+Pass the chunk content inline — do NOT make the subagent read the file.
+
+**Payload integrity:** If your platform has output token limits that could truncate the chunk before it reaches the subagent prompt, stage each chunk individually and verify the subagent received the complete content (e.g., by checking that the extracted stories reference lines from the full range of the chunk). Partial payloads are easy to miss and cause silent under-extraction.
 
 **Dispatch strategy:**
 - Dispatch subagents in waves of 3-5 (runtime agent thread limits are typically 6; keep headroom). Do not fan out all chunks at once.
-- **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., `.codex-temp/extraction/raw/batch-NN.json` or equivalent) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
+- **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., a scratch directory under the project root) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
 - **Wait semantics:** if your runtime's wait primitive returns on the first completed agent (not all), loop until every dispatched agent in the wave has reached a final state. Persist each result as it arrives.
 - Close completed agents promptly to free thread slots for the next wave.
 - **Track completion:** maintain a checklist of chunk-to-agent mappings. After all waves finish, verify every chunk produced a persisted output file. Re-dispatch any missing chunks before proceeding.
 
-### 3. Aggregate
+### 3. PAR omission review
 
-Run the aggregation script on all extracted story JSONs:
-
-```bash
-python3 "scripts/aggregate_stories.py" -o docs/superpowers/iterations/requirements/ <json-file-1> <json-file-2> ...
-```
-
-The script:
-- Combines all stories from all input files
-- Deduplicates by exact title match (merges sources)
-- Groups stories into epics by `epic_theme`
-- Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
-- Outputs per-epic files to the output directory
-
-### 4. PAR omission review
-
-Before aggregation, run a PAR omission review. The sole job of this review is to find requirements that the extraction subagents dropped.
+Before aggregation, run a PAR omission review. The sole job of this review is to find requirements AND scenarios that the extraction subagents dropped.
 
 For each chunk (or batch of chunks), dispatch two reviewers in parallel following `skills/shared/parallel-adversarial-review.md`:
 
-1. Give each reviewer the **original chunk text** and the **extracted stories** for that chunk
-2. Prompt: "Compare the source text against the extracted stories. Find every requirement, acceptance criterion, or behavioral constraint in the source that is NOT represented by any extracted story. Score 5 points for each omission found."
+1. Give each reviewer the **original chunk text** and the **extracted stories + scenarios** for that chunk
+2. Prompt: "Compare the source text against the extracted stories and scenarios. Find every requirement, acceptance criterion, behavioral constraint, or observable behavior in the source that is NOT represented by any extracted story or scenario. Score 5 points for each omission found. Pay special attention to: (a) ACs missing proof obligations, (b) observable behavior with no scenario, (c) journey steps that were summarized or skipped."
 3. Aggregate findings across both reviewers
-4. For each confirmed omission: either add a new story to the extraction output or document why it's intentionally excluded (non-normative, duplicate of another story, out of scope)
+4. For each confirmed omission: either add a new story/scenario to the extraction output or document why it's intentionally excluded
 
-This pass is required, not optional. Extraction subagents optimize for what they notice; omission reviewers optimize for what's missing. These are different cognitive tasks.
+This pass is required, not optional. Extraction subagents optimize for what they notice; omission reviewers optimize for what's missing.
 
-### 5. Aggregate
+### 4. Aggregate stories
 
-Run the aggregation script on all extracted story JSONs (including any stories added by the omission review):
+Run the story aggregation script on all extracted story JSONs (including any added by the omission review):
 
 ```bash
 python3 "scripts/aggregate_stories.py" -o docs/superpowers/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
-The script:
-- Combines all stories from all input files
-- Deduplicates by exact title match (merges sources)
-- Groups stories into epics by `epic_theme`
-- Assigns stable IDs: STORY-0001..STORY-NNNN, EPIC-001..EPIC-NNN
-- Outputs per-epic files to the output directory
+The script combines, deduplicates by title, groups into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
+
+### 5. Aggregate scenarios
+
+Run the scenario aggregation script:
+
+```bash
+python3 "scripts/aggregate_scenarios.py" \
+  -o docs/superpowers/iterations/behavior-scenarios.md \
+  --stories-dir docs/superpowers/iterations/requirements/ \
+  <json-file-1> <json-file-2> ...
+```
+
+The script combines, deduplicates by title, assigns stable SCENARIO/JOURNEY IDs, resolves story title references to STORY-IDs, and outputs `behavior-scenarios.md`.
 
 ### 6. Consolidate epics
 
-The aggregation script groups by exact `epic_theme` string. Since extraction subagents work independently, they often name the same domain differently — producing duplicate or near-duplicate epics.
+Same as before: review the epic list, merge near-duplicates, re-run aggregation. See the consolidation rules in the original extraction skill documentation.
 
-After aggregation, review the epic list and consolidate:
+**Additional consolidation check:** after merging, verify that scenario `owning_story_titles` still resolve correctly. If stories were deduplicated during re-aggregation, re-run scenario aggregation to update resolved refs.
 
-1. List the epic files: `ls docs/superpowers/iterations/requirements/EPIC-*.md`
-2. Identify groups that should merge:
-   - "Parent - Child" variants (e.g., "Recording Pipeline - State Machine" → "Recording Pipeline")
-   - Near-synonyms (e.g., "Audio Capture" + "Audio Capture and Encoding" + "Audio Recording")
-   - Same domain from different spec angles (e.g., "Privacy Permissions" + "Permissions")
-   - Keep epics separate when they represent genuinely different concerns
-3. For each merge: update the `epic_theme` in the extracted JSON files to use the canonical name
-4. Re-run the aggregation script to produce the consolidated index
-5. Verify the epic count is reasonable (roughly 20-40 for a large project, fewer for smaller ones)
-6. **Consolidation safety check:** after merging epics, verify that no distinct requirements were collapsed. If two epics had stories with different ACs that got deduplicated by title match during re-aggregation, those stories need to be restored or merged explicitly. The deduplication is by exact title only — if two stories have the same title but different ACs from different source sections, the merge silently drops one set of ACs.
+### 7. Back-link scenarios to stories
 
-**Do NOT merge epics that are legitimately different.** "Keyboard Input" (raw event handling) and "Keyboard Shortcuts" (user-configurable bindings) are separate concerns even though both say "Keyboard." Use domain judgment.
+After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
-### 7. Coverage ledger
+```bash
+python3 "scripts/backlink_scenarios.py" \
+  docs/superpowers/iterations/behavior-scenarios.md \
+  docs/superpowers/iterations/requirements/
+```
 
-Build a coverage ledger that maps every spec chunk to its extracted stories. This is the traceable proof that extraction is complete.
+The script reads scenario → owning-story mappings from `behavior-scenarios.md` and appends `scenario:SCENARIO-NNNN` or `scenario:JOURNEY-NNNN` to AC lines in the epic files that have observable behavioral impact. AC lines that already have scenario refs are skipped.
+
+This creates the bidirectional link: stories → scenarios (via AC lines) and scenarios → stories (via owning_stories field).
+
+### 8. Coverage ledger
+
+Build a coverage ledger that maps every spec chunk to its extracted stories AND scenarios. This is the traceable proof that extraction is complete.
 
 For each chunk from the inventory (step 1):
 
 1. List the chunk: `source_file`, `heading`, `start_line`–`end_line`
 2. List every story ID whose `**Sources:**` field cites overlapping lines in that file
-3. Classify the chunk:
-   - **covered** — at least one story with ACs that correspond to the chunk's normative content
+3. List every scenario ID whose `**Sources:**` field cites overlapping lines in that file
+4. Classify the chunk:
+   - **covered** — stories with ACs that correspond to normative content AND scenarios for observable behavior
+   - **story-only** — stories exist but observable behavior has no scenario (needs scenario)
    - **non-normative** — chunk contains only meta-commentary, table of contents, or boilerplate (explain why)
-   - **duplicate** — chunk's requirements are covered by stories citing a different source (cite the covering stories)
+   - **duplicate** — chunk's requirements are covered by stories citing a different source
    - **gap** — normative content with no corresponding story
 
-**Hard gate:** if any chunk is classified as **gap**, extraction is incomplete. Re-extract the gap chunks and repeat from step 4 (omission review). Do not proceed to scoping with known gaps.
+**Hard gates:**
+- If any chunk is classified as **gap**, extraction is incomplete. Re-extract and repeat.
+- If any chunk is classified as **story-only** and contains observable behavior, extraction is incomplete. Add scenarios for the missing observable behavior.
 
-**Important:** "covered" means a story exists whose ACs correspond to the chunk's normative requirements — not just that a story cites the file. One broad story can make a chunk look covered while dropping smaller requirements inside it. Check ACs, not just source citations.
+**Journey coverage check:** every journey spec file MUST produce at least one JOURNEY-NNNN scenario that preserves the complete step sequence. If a journey file only produced stories (no journey scenario), that is a gap.
 
-**Derivative artifacts warning:** if the spec directory contains both canonical documents (e.g., domain specs, journey specs) and derivative summaries (e.g., acceptance-criteria rollups, audit reports), always extract from the canonical documents. Derivative artifacts may collapse or omit detail. If you use derivatives as a convenience, verify their coverage against the canonical source list.
+### 9. Initialize behavior corpus index
 
-### 8. Validate
+Create the initial `docs/superpowers/iterations/behavior-corpus.md` from the scenario list:
+
+```markdown
+# Behavior Corpus
+
+| Scenario ID | Title | Proof seam | Run cadence | Command | Owning stories |
+|---|---|---|---|---|---|
+```
+
+Populate with all scenarios. Set run cadence:
+- Journey scenarios → `sentinel` (they run every iteration)
+- Surface scenarios → `iteration` (default, refined during scoping)
+
+Set command to `TBD` — the implementing iterations will fill these in.
+
+### 10. Validate
 
 ```bash
 python3 "scripts/validate_requirements_index.py" docs/superpowers/iterations/requirements/
+python3 "scripts/validate_scenarios.py" docs/superpowers/iterations/behavior-scenarios.md docs/superpowers/iterations/requirements/
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 
-### 9. Commit
+### 11. Commit
 
 ```bash
 git add docs/superpowers/iterations/requirements/
-git commit -m "docs: add per-epic requirements extracted from spec"
+git add docs/superpowers/iterations/behavior-scenarios.md
+git add docs/superpowers/iterations/behavior-corpus.md
+git commit -m "docs: add requirements with proof obligations, behavior scenarios, and corpus index"
 ```
 
 ## Quick Reference
@@ -144,13 +184,15 @@ git commit -m "docs: add per-epic requirements extracted from spec"
 | Step | Tool | Input | Output |
 |---|---|---|---|
 | Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
-| Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories (per subagent) |
-| Omission review | PAR (source text vs. extracted stories) | chunks + stories | Missing requirements |
-| Aggregate | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files in output dir |
-| Consolidate | Agent review of epic list | epic names | Normalized themes → re-aggregate |
-| Coverage ledger | Map every chunk → story IDs + classification | chunk list, stories | Gap/covered/non-normative per chunk |
-| Validate | `scripts/validate_requirements_index.py` | .md file | OK or errors |
+| Extract | Subagent + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
+| Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
+| Aggregate stories | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files with proof obligations |
+| Aggregate scenarios | `scripts/aggregate_scenarios.py -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |
+| Back-link | `scripts/backlink_scenarios.py` | scenarios + stories | Updated AC lines with scenario refs |
+| Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
+| Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
+| Validate | `scripts/validate_requirements_index.py` + `scripts/validate_scenarios.py` | .md files | OK or errors |
 
 ## Deferred to later plans
 
-Hierarchical reduce (specs > 1M tokens where single aggregation exceeds context), huge-spec decomposition (sub-project identification before chunking), incremental re-extraction (new spec files mid-project).
+Hierarchical reduce (specs > 1M tokens), huge-spec decomposition, incremental re-extraction.

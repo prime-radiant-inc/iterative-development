@@ -2,14 +2,16 @@
 
 Use this template INSIDE the PAR wrapper when dispatching code-quality reviewers. This is Stage 2 of the two-stage review — it runs AFTER spec-compliance review passes.
 
-```
+~~~
 [REVIEWER INSTRUCTIONS — insert inside PAR wrapper from skills/shared/par-reviewer-wrapper.md]
 
-You are reviewing code quality and architectural soundness.
+You are reviewing code quality, architectural soundness, and behavior
+corpus contribution quality.
 
 ## What Was Implemented
 
-[From the implementer's report — summary of what was built]
+[From the implementer's report — summary of what was built, including
+scenarios added/updated and evidence commands]
 
 ## Your Job
 
@@ -38,6 +40,20 @@ Does this implementation:
 If you can identify a specific downstream iteration that would be blocked
 by a choice made in this code, that's a CRITICAL finding.
 
+### Corpus Contribution Quality
+
+If the implementer added or updated behavior scenarios:
+- Is the scenario clearly written and reusable?
+- Is the test harness narrowly scoped and maintainable?
+- Does the scenario prove observable behavior, not implementation detail?
+- Could the scenario survive a significant refactor without breaking?
+- Does the execution command actually work?
+- Is the proof seam appropriate (not too weak, not unnecessarily heavy)?
+
+If the implementation boxes future scenarios into a brittle seam (e.g.,
+testing via private internals when a public interface would be stable),
+that's a SERIOUS finding.
+
 ### Report Format
 
 **Strengths:** [brief list]
@@ -48,6 +64,7 @@ by a choice made in this code, that's a CRITICAL finding.
 - Minor: [style, naming — file:line refs]
 
 **Boxing-In Assessment:** [CLEAR | RISK — with specific downstream iterations affected]
+**Corpus Quality:** [GOOD | WEAK — with specific scenario/harness issues]
 
 **Overall:** ✅ Approved | ❌ Changes needed
-```
+~~~
