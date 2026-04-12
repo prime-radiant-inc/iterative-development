@@ -57,9 +57,11 @@ For each chunk (or batch of small chunks), dispatch an extraction subagent using
 
 Pass the chunk content inline — do NOT make the subagent read the file.
 
+**Payload integrity:** If your platform has output token limits that could truncate the chunk before it reaches the subagent prompt, stage each chunk individually and verify the subagent received the complete content (e.g., by checking that the extracted stories reference lines from the full range of the chunk). Partial payloads are easy to miss and cause silent under-extraction.
+
 **Dispatch strategy:**
 - Dispatch subagents in waves of 3-5 (runtime agent thread limits are typically 6; keep headroom). Do not fan out all chunks at once.
-- **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., `.codex-temp/extraction/raw/batch-NN.json` or equivalent) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
+- **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., a scratch directory under the project root) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
 - **Wait semantics:** if your runtime's wait primitive returns on the first completed agent (not all), loop until every dispatched agent in the wave has reached a final state. Persist each result as it arrives.
 - Close completed agents promptly to free thread slots for the next wave.
 - **Track completion:** maintain a checklist of chunk-to-agent mappings. After all waves finish, verify every chunk produced a persisted output file. Re-dispatch any missing chunks before proceeding.
@@ -182,7 +184,7 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 | Step | Tool | Input | Output |
 |---|---|---|---|
 | Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
-| Extract | Agent tool + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
+| Extract | Subagent + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
 | Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
 | Aggregate stories | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files with proof obligations |
 | Aggregate scenarios | `scripts/aggregate_scenarios.py -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |

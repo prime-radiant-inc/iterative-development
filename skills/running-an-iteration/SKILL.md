@@ -58,7 +58,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
 
 1. Build the scope reviewer prompt using `scope-reviewer-prompt.md`
 2. Wrap in PAR competitive framing from `skills/shared/par-reviewer-wrapper.md`
-3. Dispatch TWO scope reviewers in parallel (Agent tool, two calls in one message)
+3. Dispatch TWO scope reviewers in parallel
 4. Aggregate findings: same issue from both = high confidence, unique = still actionable, severity disagreement = take worst
 5. If REVISE recommended: adjust iteration scope and re-review. Loop until APPROVE.
 

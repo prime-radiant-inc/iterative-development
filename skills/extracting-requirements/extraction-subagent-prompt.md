@@ -10,11 +10,10 @@ The spec taxonomy drives proof seam defaults:
 
 ## Standard Extraction (domains, contracts, test-vectors)
 
+Dispatch a subagent with this prompt. Description: "Extract stories + scenarios from [source description]"
+
 ~~~
-Agent tool (general-purpose):
-  description: "Extract stories + scenarios from [source description]"
-  prompt: |
-    You are extracting testable requirements and behavior scenarios from spec documentation.
+You are extracting testable requirements and behavior scenarios from spec documentation.
 
     ## Your Input
 
@@ -111,12 +110,11 @@ Agent tool (general-purpose):
 
 For chunks from journey spec files, use this variant instead. Journey specs have a sequential step structure that must be preserved as a journey scenario chain.
 
+Dispatch a subagent with this prompt. Description: "Extract stories + journey scenario from [source description]"
+
 ~~~
-Agent tool (general-purpose):
-  description: "Extract stories + journey scenario from [source description]"
-  prompt: |
-    You are extracting testable requirements and a journey scenario chain
-    from a user journey spec.
+You are extracting testable requirements and a journey scenario chain
+from a user journey spec.
 
     ## Your Input
 

@@ -2,11 +2,10 @@
 
 Wrap any reviewer prompt with this competitive framing. Insert the domain-specific reviewer instructions where indicated by `[REVIEWER INSTRUCTIONS HERE]`.
 
+Dispatch a subagent with this prompt. Description: "PAR Review [A|B]: [review description]"
+
 ```
-Agent tool (general-purpose):
-  description: "PAR Review [A|B]: [review description]"
-  prompt: |
-    ## Competitive Context
+## Competitive Context
 
     You are Reviewer [A|B]. A parallel reviewer is evaluating the same
     work right now. You will NOT see each other's findings.
@@ -45,9 +44,9 @@ Agent tool (general-purpose):
 
 ## Usage
 
-When dispatching a PAR pair, send TWO Agent tool calls in the SAME message:
+When dispatching a PAR pair, dispatch TWO subagents simultaneously:
 
-1. Agent call 1: description "PAR Review A: [task]", prompt = wrapper with [A] + reviewer instructions
-2. Agent call 2: description "PAR Review B: [task]", prompt = wrapper with [B] + reviewer instructions
+1. Subagent 1: description "PAR Review A: [task]", prompt = wrapper with [A] + reviewer instructions
+2. Subagent 2: description "PAR Review B: [task]", prompt = wrapper with [B] + reviewer instructions
 
-Both run in parallel. Aggregate findings after both return.
+Both run in parallel. Neither sees the other's work. Aggregate findings after both return.

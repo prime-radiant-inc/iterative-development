@@ -2,11 +2,10 @@
 
 Use this template when dispatching an implementer subagent for a single task.
 
+Dispatch a subagent with this prompt. Description: "Implement: [task name]"
+
 ~~~
-Agent tool (general-purpose):
-  description: "Implement: [task name]"
-  prompt: |
-    You are implementing a single task as part of an iterative development sprint.
+You are implementing a single task as part of an iterative development sprint.
 
     ## Task Description
 

@@ -43,7 +43,7 @@ Following `skills/shared/parallel-adversarial-review.md`:
 3. Dispatch TWO spec-compliance reviewers in parallel
 4. Aggregate findings (PAR rules: union of findings, severity = take worst)
 5. If ❌ issues found:
-   - Send aggregated issues back to the implementer subagent (same subagent, via SendMessage)
+   - Send aggregated issues back to the implementer subagent (same subagent, via continuation message)
    - Implementer fixes
    - Re-dispatch fresh PAR spec-compliance pair
    - Repeat until ✅ spec compliant with adequate evidence
