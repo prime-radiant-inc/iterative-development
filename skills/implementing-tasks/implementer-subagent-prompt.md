@@ -22,6 +22,33 @@ You are implementing a single task as part of an iterative development sprint.
     [For each AC in the task's stories that has behavioral_impact other than
     "none", list: AC-N, proof seam, scenario to update or create]
 
+    ## Engineering Principles
+
+    These principles govern how you build, not what you build:
+
+    - **Earn every abstraction.** The best code is no code. Every
+      interface, wrapper, and indirection layer must serve the product's
+      needs. If an abstraction exists solely to make something testable,
+      ask whether the design could be naturally testable without it.
+      Testability is a quality of good design, not a goal that justifies
+      distorting it.
+
+    - **Work with the platform.** Use the language's native concurrency
+      model, type system, and standard library as they were designed to be
+      used. If you find yourself suppressing warnings, adding safety
+      escape hatches, or reimplementing platform-provided functionality,
+      your design does not fit the platform. Redesign.
+
+    - **Navigability matters.** Organize source files so someone without
+      the spec can find things by domain. When a flat directory stops
+      revealing the project's shape at a glance, add structure.
+
+    - **Decompose coordination.** If a single component becomes the hub
+      that wires together every subsystem, that is a design problem. Break
+      coordination along the same domain boundaries as the code it
+      coordinates — don't let an orchestrator become a god object by
+      accretion.
+
     ## Before You Begin — Pre-Flight Mapping
 
     Before writing any code, state:
@@ -64,6 +91,11 @@ You are implementing a single task as part of an iterative development sprint.
     - Did I follow existing codebase patterns?
     - **Did I update the behavior corpus for every observable AC I changed?**
     - **Is the evidence at the correct proof seam? (not weaker than declared)**
+    - Am I working with the platform's idioms, or fighting them?
+    - Could any abstraction I added be removed without losing real
+      test coverage? (If yes, remove it.)
+    - Is the code organized so someone unfamiliar could find things?
+    - Is coordination responsibility accumulating in one place?
 
     Fix any issues found during self-review before reporting.
 

@@ -20,10 +20,29 @@ Read the code that was changed and evaluate:
 ### Code Quality
 - Is the code clean and maintainable?
 - Are names clear and domain-appropriate (not implementation-descriptive)?
-- Are there unnecessary abstractions or premature optimization?
 - Is there dead code or unused imports?
 - Are tests testing real behavior, not mock behavior?
 - Does each file have one clear responsibility?
+
+### Engineering Health
+- **Abstraction justification:** Do the abstractions serve the product or
+  just the test harness? An interface that exists solely for test injection,
+  with no prospect of a second real implementation, is a design smell. Ask:
+  could the behavior be tested without this indirection? If yes, the
+  abstraction is not earning its place. This is a SERIOUS finding.
+- **Platform fit:** Is the code working WITH the platform's idioms — native
+  concurrency model, type system, standard patterns — or fighting them?
+  Compiler suppressions, safety escape hatches, and manual reimplementation
+  of platform-provided functionality are SERIOUS findings.
+- **Navigability:** Can someone unfamiliar with the project find things by
+  domain? If source files are dumped in a flat structure with no domain
+  grouping, and the project has grown past the point where a directory
+  listing reveals its shape, that is a SERIOUS finding.
+- **Coordination creep:** Is a single file accumulating knowledge of every
+  subsystem? If an orchestrator or controller is growing by accretion
+  across iterations — becoming the place where everything gets wired
+  together — that is a SERIOUS finding. Coordination should be decomposed
+  along domain boundaries, not centralized.
 
 ### Boxing-In Check
 

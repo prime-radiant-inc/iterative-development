@@ -74,7 +74,7 @@ Break the iteration scope into TDD-sized tasks. Each task = failing test → imp
 
 Evidence tasks are first-class — they produce scenario updates, test harness extensions, and corpus index entries. They are NOT afterthoughts. Interleave evidence tasks with code tasks: after implementing a feature, the next task should be extending or adding the scenario that proves it.
 
-**Cross-iteration dependencies:** Some stories reference subsystems that don't exist yet. For these, implement a protocol/abstraction that satisfies the story's ACs without coupling to the future implementation. Document the dependency with a TODO comment citing the future iteration. Do NOT defer the story silently or force premature integration.
+**Cross-iteration dependencies:** Some stories reference subsystems that don't exist yet. For these, implement the thinnest abstraction boundary that satisfies the story's ACs without coupling to the future implementation. Prefer a single clean interface over a decomposed hierarchy — the real implementation will define its own internal structure when it arrives. Document the dependency with a TODO comment citing the future iteration. Do NOT defer the story silently or force premature integration.
 
 ### 7. Dispatch implementing-tasks
 
