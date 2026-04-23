@@ -2410,7 +2410,7 @@ git commit -m "feat: add scenario validation script"
 
 ### Spec coverage
 
-Verified against the implementer spec at `/Users/jesse/Documents/GitHub/codex-dogfood/docs/superpowers/specs/2026-04-11-iterative-development-behavior-evidence-redesign.md`:
+Verified against the implementer spec `2026-04-11-iterative-development-behavior-evidence-redesign.md`:
 
 | Spec section | Task |
 |---|---|

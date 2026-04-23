@@ -1,8 +1,22 @@
 {
   "name": "iterative-development",
-  "description": "An iterative implementation methodology that pairs with superpowers. Extracts requirements from arbitrary-size spec collateral, defines a walking skeleton, then loops through audited sprints until an auditor confirms the product matches the spec. Designed for large or comprehensive specs where the upfront writing-plans → SDD flow loses the plot.",
-  "version": "0.0.1",
-  "author": "iterative-development contributors",
+  "description": "An iterative implementation methodology that pairs with superpowers. Extracts requirements with proof obligations from large spec collateral, defines a walking skeleton that closes a real journey, then loops through audited sprints building a behavior evidence corpus until an auditor confirms the product matches the spec. Designed for comprehensive or ambiguous specs where the upfront writing-plans flow loses the plot.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Jesse Vincent",
+    "email": "jesse@primeradiant.com"
+  },
+  "homepage": "https://github.com/prime-radiant-inc/iterative-development",
+  "repository": "https://github.com/prime-radiant-inc/iterative-development",
+  "license": "Apache-2.0",
+  "keywords": [
+    "skills",
+    "iterative-development",
+    "walking-skeleton",
+    "requirements-extraction",
+    "behavior-evidence",
+    "audit-loop"
+  ],
   "components": {
     "skills": [
       "skills/iterative-development",
