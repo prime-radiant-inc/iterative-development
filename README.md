@@ -38,14 +38,14 @@ Completion means the product has passing behavior evidence at the correct seam f
 
 ## Installation
 
-This plugin is not yet published to the superpowers marketplace. To install from a local checkout:
+Install from the Prime Radiant marketplace:
 
 ```
-/plugin marketplace add /path/to/iterative-development
-/plugin install iterative-development
+/plugin marketplace add prime-radiant-inc/prime-radiant-marketplace
+/plugin install iterative-development@prime-radiant-marketplace
 ```
 
-After changes, reinstall and restart Claude Code.
+Restart Claude Code after installing.
 
 ## Running the tests
 
