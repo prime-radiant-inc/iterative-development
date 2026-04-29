@@ -62,4 +62,4 @@ Replace `<tag-or-commit>` with a real tag, branch, or commit SHA.
 ## Getting Help
 
 - Report issues: https://github.com/prime-radiant-inc/iterative-development/issues
-- Full documentation: https://github.com/prime-radiant-inc/iterative-development/blob/main/docs/README.opencode.md
+- Full documentation: ../docs/README.opencode.md
