@@ -48,13 +48,15 @@ The plugin intentionally does not inject a conversation bootstrap. Bootstrap beh
 
 OpenCode reinstalls git plugins when it refreshes plugin dependencies. Restart OpenCode after changing plugin config.
 
-To pin a specific version, use a branch or tag:
+To pin a specific version:
 
 ```json
 {
-  "plugin": ["iterative-development@git+https://github.com/prime-radiant-inc/iterative-development.git#v0.1.0"]
+  "plugin": ["iterative-development@git+https://github.com/prime-radiant-inc/iterative-development.git#<tag-or-commit>"]
 }
 ```
+
+Replace `<tag-or-commit>` with a real tag, branch, or commit SHA.
 
 ## Troubleshooting
 
@@ -72,14 +74,14 @@ To pin a specific version, use a branch or tag:
 
 ## Development Checks
 
-Run repository validation, including OpenCode structural checks:
-
-```bash
-./scripts/run_validation_suite.sh
-```
-
-Run only OpenCode structural checks:
+Run the OpenCode-specific structural checks:
 
 ```bash
 bash tests/opencode/run-tests.sh
+```
+
+The repository-wide validation suite is also available, but it may currently expose unrelated fixture validator failures until those are fixed:
+
+```bash
+./scripts/run_validation_suite.sh
 ```

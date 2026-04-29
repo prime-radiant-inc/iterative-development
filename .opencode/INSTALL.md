@@ -39,9 +39,11 @@ To pin a specific version:
 
 ```json
 {
-  "plugin": ["iterative-development@git+https://github.com/prime-radiant-inc/iterative-development.git#v0.1.0"]
+  "plugin": ["iterative-development@git+https://github.com/prime-radiant-inc/iterative-development.git#<tag-or-commit>"]
 }
 ```
+
+Replace `<tag-or-commit>` with a real tag, branch, or commit SHA.
 
 ## Troubleshooting
 
