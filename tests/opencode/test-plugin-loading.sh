@@ -53,12 +53,28 @@ else
     exit 1
 fi
 
-echo "Test 5: Checking package metadata..."
+echo "Test 5: Checking plugin config hook..."
+node --input-type=module - <<'JS'
+import assert from 'assert/strict';
+import { pathToFileURL } from 'url';
+
+const pluginModule = await import(pathToFileURL(process.env.OPENCODE_CONFIG_DIR + '/plugins/iterative-development.js'));
+const plugin = await pluginModule.IterativeDevelopmentPlugin();
+const config = {};
+
+await plugin.config(config);
+
+assert.deepEqual(config.skills.paths, [process.env.ITERATIVE_DEVELOPMENT_SKILLS_DIR]);
+JS
+echo "  [PASS] Plugin config hook registers bundled skills"
+
+echo "Test 6: Checking package metadata..."
 python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 
-data = json.loads(Path('package.json').read_text())
+data = json.loads(Path(os.environ['ITERATIVE_DEVELOPMENT_DIR'], 'package.json').read_text())
 assert data['name'] == 'iterative-development'
 assert data['type'] == 'module'
 assert data['main'] == '.opencode/plugins/iterative-development.js'

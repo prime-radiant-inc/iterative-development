@@ -7,6 +7,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 export TEST_HOME
 TEST_HOME=$(mktemp -d)
+TEST_HOME="$(cd "$TEST_HOME" && pwd -P)"
 export HOME="$TEST_HOME"
 export XDG_CONFIG_HOME="$TEST_HOME/.config"
 export OPENCODE_CONFIG_DIR="$TEST_HOME/.config/opencode"
