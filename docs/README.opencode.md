@@ -23,7 +23,7 @@ Use OpenCode's native `skill` tool to list and load skills:
 
 ```
 use skill tool to list skills
-use skill tool to load iterative-development/iterative-development
+use skill tool to load iterative-development
 ```
 
 The top-level skill orchestrates the iterative workflow. The supporting skills are also available for direct use:

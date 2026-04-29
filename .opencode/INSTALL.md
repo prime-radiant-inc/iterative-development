@@ -20,7 +20,7 @@ Add both plugins to the `plugin` array in your `opencode.json` global or project
 
 Restart OpenCode. The plugin registers all iterative-development skills automatically.
 
-Verify by using OpenCode's native `skill` tool to list skills, then load `iterative-development/iterative-development`.
+Verify by using OpenCode's native `skill` tool to list skills, then load `iterative-development`.
 
 ## Usage
 
@@ -28,7 +28,7 @@ Use OpenCode's native `skill` tool:
 
 ```
 use skill tool to list skills
-use skill tool to load iterative-development/iterative-development
+use skill tool to load iterative-development
 ```
 
 ## Updating
