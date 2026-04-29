@@ -28,11 +28,11 @@ use skill tool to load iterative-development
 
 The top-level skill orchestrates the iterative workflow. The supporting skills are also available for direct use:
 
-- `iterative-development/extracting-requirements`
-- `iterative-development/scoping-the-simplest-core`
-- `iterative-development/running-an-iteration`
-- `iterative-development/implementing-tasks`
-- `iterative-development/auditing-progress`
+- `extracting-requirements`
+- `scoping-the-simplest-core`
+- `running-an-iteration`
+- `implementing-tasks`
+- `auditing-progress`
 
 ## Relationship to superpowers
 
