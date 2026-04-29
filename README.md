@@ -1,6 +1,6 @@
 # iterative-development
 
-A Claude Code plugin that drives an autonomous, audited implementation loop for projects with large, comprehensive, or ambiguous specs. Pairs with [superpowers](https://github.com/obra/superpowers).
+A Claude Code and OpenCode skill pack that drives an autonomous, audited implementation loop for projects with large, comprehensive, or ambiguous specs. Pairs with [superpowers](https://github.com/obra/superpowers).
 
 ## When to use it
 
@@ -38,6 +38,8 @@ Completion means the product has passing behavior evidence at the correct seam f
 
 ## Installation
 
+### Claude Code
+
 Install from the Prime Radiant marketplace:
 
 ```
@@ -46,6 +48,21 @@ Install from the Prime Radiant marketplace:
 ```
 
 Restart Claude Code after installing.
+
+### OpenCode
+
+Add both plugins to the `plugin` array in your `opencode.json` global or project config:
+
+```json
+{
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "iterative-development@git+https://github.com/prime-radiant-inc/iterative-development.git"
+  ]
+}
+```
+
+Restart OpenCode after installing. See [docs/README.opencode.md](docs/README.opencode.md) for the full OpenCode guide.
 
 ## Running the tests
 
@@ -57,7 +74,7 @@ Individual test files can be run with `pytest tests/`.
 
 ## Relationship to superpowers
 
-This plugin depends conceptually on skills from the `superpowers` plugin (brainstorming, TDD, parallel adversarial review, verification-before-completion). Install `superpowers` alongside `iterative-development` for the intended experience.
+This plugin depends conceptually on skills from the `superpowers` plugin (brainstorming, TDD, parallel adversarial review, verification-before-completion). Install `superpowers` alongside `iterative-development` for the intended experience in Claude Code or OpenCode.
 
 ## License
 
