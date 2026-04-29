@@ -10,6 +10,7 @@ Thumbs.db
 *.swo
 .vscode/
 .idea/
+.worktrees/
 
 # Python
 __pycache__/
