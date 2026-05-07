@@ -109,3 +109,4 @@ Use the least powerful model that can handle each role:
 - `code-quality-reviewer-prompt.md` — Stage 2 review template (includes boxing-in)
 - `skills/shared/parallel-adversarial-review.md` — PAR methodology
 - `skills/shared/par-reviewer-wrapper.md` — competitive framing wrapper
+- `running-an-iteration/SKILL.md` § Workspace hygiene — efficiency and hygiene rules for the per-task work loop

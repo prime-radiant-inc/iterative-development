@@ -13,6 +13,15 @@ Drives one iteration: picks the next pending, runs sentinel corpus baseline, run
 
 Invoked by `iterative-development` inside the main loop. Each invocation runs exactly one iteration. After return, the orchestrator invokes `auditing-progress`.
 
+## Workspace hygiene
+
+These rules apply throughout the iteration loop. They prevent the most common time-sinks an operator falls into when running iter-dev.
+
+- **No redundant envelope re-runs.** When you create a story worktree off an integration HEAD whose envelope (lint/build/test) was just verified, do not re-run lint/build/test on story-start. If a sanity check is wanted, gate it on `git rev-parse <story> != <last-verified-sha>` — if equal, skip with a one-line note. Re-running on a no-op SHA is pure waste, and `just lint` may mutate files in-place, which means the redundant run can also create accidental dirty state.
+- **Capture test output once, grep the artifact.** When inspecting a `just test` (or `./bin/test.sh`) run, redirect to a file once: `just test 2>&1 | tee /tmp/<story>-test.log`. Then grep the file for whatever filter you want, as many times as you want. Never re-run the full suite to apply a different grep — each suite run is multi-minute, the file is free.
+- **One test runner per story.** Pick one of `just test` OR `./bin/test.sh` and stay there. Running both is duplicate work; if the first errored, fix the cause rather than fanning out to a second runner.
+- **Test discovery uses source grep, not test runs.** To find whether a test by some name exists, use `git grep` / `rg` against the source tree. A full test-suite run is not a search tool.
+
 ## Script Location
 
 All scripts referenced below live in this skill's `scripts/` directory, next to this SKILL.md file.
