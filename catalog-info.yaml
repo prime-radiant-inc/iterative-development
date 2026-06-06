@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: iterative-development
+  description: "Claude Code plugin that drives an autonomous, audited implementation loop for projects with large, comprehensive, or ambiguous specs."
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    prime-radiant.com/repo-map-rev: "3ca786cb14cd79019da0cf815845be1e61d934dc"
+  tags: [python, methodology]
+spec:
+  type: tool
+  lifecycle: production
+  owner: user:obra
+  system: superpowers
