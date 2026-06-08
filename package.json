@@ -1,0 +1,6 @@
+{
+  "name": "iterative-development",
+  "version": "0.1.0",
+  "type": "module",
+  "main": ".opencode/plugins/iterative-development.js"
+}

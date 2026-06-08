@@ -9,9 +9,11 @@ echo "=== Running Python unit tests ==="
 python3 -m unittest discover tests/ -v
 
 echo ""
-echo "=== Validating plugin manifest ==="
+echo "=== Validating plugin manifests ==="
 python3 -c "import json; json.load(open('.claude-plugin/plugin.json'))"
 echo "OK: .claude-plugin/plugin.json"
+python3 -c "import json; data=json.load(open('package.json')); assert data['main'] == '.opencode/plugins/iterative-development.js'; assert data['type'] == 'module'"
+echo "OK: package.json"
 
 echo ""
 echo "=== Validating all SKILL.md files ==="
@@ -52,6 +54,10 @@ echo "=== Verifying implementing-tasks prompt templates ==="
 for tmpl in skills/implementing-tasks/*-prompt.md; do
     test -f "$tmpl" && echo "OK: $tmpl exists" || { echo "FAIL: $tmpl missing"; exit 1; }
 done
+
+echo ""
+echo "=== Running OpenCode plugin checks ==="
+bash tests/opencode/run-tests.sh
 
 echo ""
 echo "=== All validation checks passed ==="
