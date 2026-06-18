@@ -4,6 +4,7 @@
 
 **Intent:** The thinnest end-to-end slice that exercises the full product shape.
 **Design rationale:** Implement the single greet command end-to-end; this is the entire v0 and proves the CLI entry point works.
+**Journey scenario:** JOURNEY-0001
 **Stories committed:**
 - STORY-0001 (EPIC-001)
 **Status:** pending
