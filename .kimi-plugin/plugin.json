@@ -1,0 +1,33 @@
+{
+  "name": "iterative-development",
+  "version": "0.1.0",
+  "description": "An iterative implementation methodology that pairs with superpowers. Extracts requirements with proof obligations from large spec collateral, defines a walking skeleton that closes a real journey, then loops through audited sprints building a behavior evidence corpus until an auditor confirms the product matches the spec. Designed for comprehensive or ambiguous specs where the upfront writing-plans flow loses the plot.",
+  "author": {
+    "name": "Jesse Vincent",
+    "email": "jesse@primeradiant.com"
+  },
+  "homepage": "https://github.com/prime-radiant-inc/iterative-development",
+  "license": "Apache-2.0",
+  "keywords": [
+    "skills",
+    "iterative-development",
+    "walking-skeleton",
+    "requirements-extraction",
+    "behavior-evidence",
+    "audit-loop"
+  ],
+  "skills": "./skills/",
+  "skillInstructions": "Kimi Code tool mapping for iterative-development skills:\n\n- When a skill says to dispatch a subagent (implementer, auditor, extraction, scope reviewer, or PAR reviewer), use Kimi Code's `Agent` tool. Paste the fully filled prompt template into `prompt` and provide a short `description`.\n- For implementer, reviewer, and auditor subagents (work that writes or reviews code), call `Agent` with `subagent_type: \"coder\"`.\n- For read-only exploration or read-only planning, use `subagent_type: \"explore\"` or `\"plan\"` respectively.\n- When a skill says to dispatch TWO subagents in parallel (parallel adversarial review), issue two `Agent` calls in the same response so they run concurrently. Neither sees the other's output.\n- When a skill says to continue an existing subagent with a follow-up message, resume it via the `Agent` tool's `resume` parameter (pass the agent id) or with `AgentSwarm`'s `resume_agent_ids`.\n- For many similar subagent dispatches (e.g. per-chunk extraction subagents), use `AgentSwarm` with a `prompt_template` and `items`.\n- References like `superpowers:skill-name` refer to skills from the superpowers plugin; invoke them with Kimi Code's native `Skill` tool using the plain skill name (e.g. `test-driven-development`).\n- Use Kimi Code's `Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`, `FetchURL`, `WebSearch`, and MCP tools by their actual exposed names. Use `TodoList` for progress tracking.",
+  "interface": {
+    "displayName": "Iterative Development",
+    "shortDescription": "Autonomous audited implementation loop for large or ambiguous specs",
+    "longDescription": "Extract requirements with proof obligations from large spec collateral, scope a walking skeleton that closes a real journey, then run audited iterations with parallel adversarial review until a final behavior-evidence audit passes. Pairs with the superpowers plugin.",
+    "developerName": "Jesse Vincent",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/prime-radiant-inc/iterative-development"
+  }
+}
